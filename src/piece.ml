@@ -30,6 +30,22 @@ let pattern_helper f piece =
   | King t -> f t
   | Empty t -> f t
 
+let init name color position =
+  match name with
+  | "king" ->
+      King { name = (if color then "♚" else "♔"); color; x = fst position; y = snd position }
+  | "queen" ->
+      Queen { name = (if color then "♛" else "♕"); color; x = fst position; y = snd position }
+  | "rook" ->
+      Rook { name = (if color then "♜" else "♖"); color; x = fst position; y = snd position }
+  | "bishop" ->
+      Bishop { name = (if color then "♝" else "♗"); color; x = fst position; y = snd position }
+  | "knight" ->
+      Knight { name = (if color then "♞" else "♘"); color; x = fst position; y = snd position }
+  | "pawn" ->
+      Pawn { name = (if color then "♟︎" else "♙"); color; x = fst position; y = snd position }
+  | _ -> Empty { name = ""; color; x = fst position; y = snd position }
+
 let position piece = pattern_helper (fun piece_info -> (piece_info.x, piece_info.y)) piece
 
 let get_name piece = pattern_helper (fun piece_info -> piece_info.name) piece
