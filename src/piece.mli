@@ -10,6 +10,9 @@ type color = bool
 val init_piece : string -> bool -> int -> int -> t
 (** [init name color x y] initializes a piece with [name], [color], and position ([x], [y]). *)
 
+val is_empty : t -> bool
+(** [is_empty p] is whether or not piece p is of the Empty variant. *)
+
 val position : t -> int * int
 (** [position p] is a tuple representing the position of piece p on the board. *)
 

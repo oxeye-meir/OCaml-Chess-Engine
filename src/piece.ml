@@ -35,7 +35,7 @@ let pattern_helper f piece =
 (* white king ♔ white queen ♕ white rook ♖ white bishop ♗ white knight ♘ white pawn ♙ black
    king ♚ black queen ♛ black rook ♜ black bishop ♝ black knight ♞ black pawn ♟︎ *)
 
-let init_piece name color x y = 
+let init_piece name color x y =
   match name with
   | "pawn" ->
       let piece_name = if color then "♟︎" else "♙" in
@@ -57,6 +57,11 @@ let init_piece name color x y =
       Queen { name = piece_name; color; x; y }
   | "empty" -> Empty { name = " "; color; x; y }
   | _ -> raise (InvalidPiece name)
+
+let is_empty piece =
+  match piece with
+  | Empty _ -> true
+  | _ -> false
 
 let position piece = pattern_helper (fun piece_info -> (piece_info.x, piece_info.y)) piece
 
@@ -85,7 +90,9 @@ let rec rook_leftright col x current_list =
 let valid_rook_moves rook =
   let updown_list = rook_updown 0 in
   let left_right_list = rook_leftright 0 in
-  [] |> updown_list rook.y |> left_right_list rook.x |> List.sort_uniq compare
+  [] |> updown_list rook.y |> left_right_list rook.x
+  |> List.filter (fun x -> x <> (rook.x, rook.y))
+  |> List.sort_uniq compare
 
 let valid_knight_moves (knight : piece_info) : (int * int) list =
   [
@@ -100,22 +107,23 @@ let valid_knight_moves (knight : piece_info) : (int * int) list =
   ]
 
 let rec bishop_moves direction (x, y) current_list : (int * int) list =
+  let next_direction = direction + 4 in
   match direction mod 4 with
   | 0 ->
-      if direction / 4 = 7 then
-        (x + 1, y + 1) :: bishop_moves direction (x + 1, y + 1) current_list
+      if direction / 4 <= 7 then
+        (x + 1, y + 1) :: bishop_moves next_direction (x + 1, y + 1) current_list
       else current_list
   | 1 ->
-      if direction / 4 = 7 then
-        (x + 1, y - 1) :: bishop_moves direction (x + 1, y - 1) current_list
+      if direction / 4 <= 7 then
+        (x + 1, y - 1) :: bishop_moves next_direction (x + 1, y - 1) current_list
       else current_list
   | 2 ->
-      if direction / 4 = 7 then
-        (x - 1, y + 1) :: bishop_moves direction (x - 1, y + 1) current_list
+      if direction / 4 <= 7 then
+        (x - 1, y + 1) :: bishop_moves next_direction (x - 1, y + 1) current_list
       else current_list
   | _ ->
-      if direction / 4 = 7 then
-        (x - 1, y - 1) :: bishop_moves direction (x - 1, y - 1) current_list
+      if direction / 4 <= 7 then
+        (x - 1, y - 1) :: bishop_moves next_direction (x - 1, y - 1) current_list
       else current_list
 
 let valid_bishop_moves (bishop : piece_info) : (int * int) list =

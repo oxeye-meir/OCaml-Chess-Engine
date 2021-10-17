@@ -11,6 +11,14 @@ open Piece
 type t = Piece.t list list
 
 (* Helper functions *)
+
+(** Iterate through Board matrix and check if it's empty. *)
+let position_empty board (x, y) =
+  let row = List.nth board x in
+  let piece = List.nth row y in
+  is_empty piece
+
+(* occupied_squares needs to filter out Empty pieces *)
 let occupied_squares board = board |> List.flatten |> List.map (fun piece -> position piece)
 
 let row_to_string row = List.fold_left (fun acc piece -> acc ^ get_name piece ^ "|") "|" row
@@ -52,7 +60,10 @@ let init_board =
     backrank false 7;
   ]
 
-let next_moves board piece = raise (Failure "Unimplemented")
+let next_moves board piece =
+  let possible_moves = valid_moves piece in
+  let empty_check = position_empty board in
+  List.filter empty_check possible_moves
 
 let move board piece = raise (Failure "Unimplemented")
 
