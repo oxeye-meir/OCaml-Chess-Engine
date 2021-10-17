@@ -2,6 +2,8 @@ type color = bool
 
 exception EmptySquare
 
+exception InvalidPiece of string
+
 type piece_info = {
   name : string;
   color : color;
@@ -30,21 +32,31 @@ let pattern_helper f piece =
   | King t -> f t
   | Empty t -> f t
 
-let init name color position =
+(* white king ♔ white queen ♕ white rook ♖ white bishop ♗ white knight ♘ white pawn ♙ black
+   king ♚ black queen ♛ black rook ♜ black bishop ♝ black knight ♞ black pawn ♟︎ *)
+
+let init_piece name color x y = 
   match name with
-  | "king" ->
-      King { name = (if color then "♚" else "♔"); color; x = fst position; y = snd position }
-  | "queen" ->
-      Queen { name = (if color then "♛" else "♕"); color; x = fst position; y = snd position }
-  | "rook" ->
-      Rook { name = (if color then "♜" else "♖"); color; x = fst position; y = snd position }
-  | "bishop" ->
-      Bishop { name = (if color then "♝" else "♗"); color; x = fst position; y = snd position }
-  | "knight" ->
-      Knight { name = (if color then "♞" else "♘"); color; x = fst position; y = snd position }
   | "pawn" ->
-      Pawn { name = (if color then "♟︎" else "♙"); color; x = fst position; y = snd position }
-  | _ -> Empty { name = ""; color; x = fst position; y = snd position }
+      let piece_name = if color then "♟︎" else "♙" in
+      Pawn { name = piece_name; color; x; y }
+  | "knight" ->
+      let piece_name = if color then "♞" else "♘" in
+      Knight { name = piece_name; color; x; y }
+  | "rook" ->
+      let piece_name = if color then "♜" else "♖" in
+      Rook { name = piece_name; color; x; y }
+  | "bishop" ->
+      let piece_name = if color then "♝" else "♗" in
+      Bishop { name = piece_name; color; x; y }
+  | "king" ->
+      let piece_name = if color then "♚" else "♔" in
+      King { name = piece_name; color; x; y }
+  | "queen" ->
+      let piece_name = if color then "♛" else "♕" in
+      Queen { name = piece_name; color; x; y }
+  | "empty" -> Empty { name = " "; color; x; y }
+  | _ -> raise (InvalidPiece name)
 
 let position piece = pattern_helper (fun piece_info -> (piece_info.x, piece_info.y)) piece
 

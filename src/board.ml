@@ -11,17 +11,9 @@ open Piece
 type t = Piece.t list list
 
 (* Helper functions *)
-let rec gen_columns_of_row col num_of_cols list =
-  if col < num_of_cols then gen_columns_of_row (col + 1) num_of_cols ((0, col) :: list)
-  else list
-
-let columns = gen_columns_of_row 0 8 []
-
-let gen_rows columns row = List.map (fun (_, col) -> (row, col)) columns
-
-let rows = gen_rows columns 0
-
 let occupied_squares board = board |> List.flatten |> List.map (fun piece -> position piece)
+
+let row_to_string row = List.fold_left (fun acc piece -> acc ^ get_name piece ^ "|") "|" row
 
 (* [[rook b;knight b;bishop b;queen b;king b;bishop b;knight b;rook b]; [pawn b;pawn b;pawn
    b;pawn b;pawn b;pawn b;pawn b;pawn b]; [empty;empty;empty;empty;empty;empty;empty;empty];
@@ -29,21 +21,42 @@ let occupied_squares board = board |> List.flatten |> List.map (fun piece -> pos
    [empty;empty;empty;empty;empty;empty;empty;empty];
    [empty;empty;empty;empty;empty;empty;empty;empty]; [pawn w;pawn w;pawn w;pawn w;pawn w;pawn
    w;pawn w;pawn w]; [rook w;knight w;bishop w;queen w;king w;bishop w;knight w;rook w]] *)
+let rec empty_squares color x y lst =
+  if y <= 7 then empty_squares (not color) x (y + 1) (init_piece "empty" color x y :: lst)
+  else lst
 
-(** pieces = [Pawn B/W, Rook B/W, Knight B/W, Bishop B/W, Queen B/W, King B/W, Empty] *)
+let rec pawns color x y lst =
+  if y <= 7 then pawns color x (y + 1) (init_piece "pawn" color x y :: lst) else lst
 
-let init (index : Piece.t list) : t =
-  let index = List.nth index in
+let backrank color x =
   [
-    [ index 2; index 4; index 6; index 8; index 10; index 6; index 4; index 2 ];
-    [ index 0; index 0; index 0; index 0; index 0; index 0; index 0; index 0 ];
-    [ index 12; index 12; index 12; index 12; index 12; index 12; index 12; index 12 ];
-    [ index 12; index 12; index 12; index 12; index 12; index 12; index 12; index 12 ];
-    [ index 12; index 12; index 12; index 12; index 12; index 12; index 12; index 12 ];
-    [ index 12; index 12; index 12; index 12; index 12; index 12; index 12; index 12 ];
-    [ index 1; index 1; index 1; index 1; index 1; index 1; index 1; index 1 ];
-    [ index 3; index 5; index 7; index 9; index 11; index 7; index 5; index 3 ];
+    init_piece "rook" color x 0;
+    init_piece "knight" color x 1;
+    init_piece "bishop" color x 2;
+    init_piece "queen" color x 3;
+    init_piece "king" color x 4;
+    init_piece "bishop" color x 5;
+    init_piece "knight" color x 6;
+    init_piece "rook" color x 7;
   ]
 
-(** val move : t -> Piece.t -> t [move b p] is a board configuration after piece p is moved in
-    board b. *)
+let init_board =
+  [
+    backrank true 0;
+    pawns true 1 0 [];
+    empty_squares false 2 0 [];
+    empty_squares true 3 0 [];
+    empty_squares false 4 0 [];
+    empty_squares true 5 0 [];
+    pawns false 6 0 [];
+    backrank false 7;
+  ]
+
+let next_moves board piece = raise (Failure "Unimplemented")
+
+let move board piece = raise (Failure "Unimplemented")
+
+let rec to_string (board : t) =
+  match board with
+  | [] -> ""
+  | h :: t -> row_to_string h ^ "\n-----------------\n" ^ to_string t

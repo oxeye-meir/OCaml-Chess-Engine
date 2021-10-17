@@ -7,10 +7,8 @@ type t
 type color = bool
 (** The color of the piece. If true, then the piece is black, else it is white.*)
 
-val init : string -> color -> int * int -> t
-(** [init n c q] is a piece representing the initial position q of piece p with color c and
-    name n on the board. Requires:
-    [n is the lowercase English name of the piece. Each English name will map to a Unicode Chess piece character based on the color c value.] *)
+val init_piece : string -> bool -> int -> int -> t
+(** [init name color x y] initializes a piece with [name], [color], and position ([x], [y]). *)
 
 val position : t -> int * int
 (** [position p] is a tuple representing the position of piece p on the board. *)
