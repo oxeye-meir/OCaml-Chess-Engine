@@ -17,3 +17,7 @@ clean:
 	
 doc:
 	dune build @doc
+
+zip:
+	rm -f chess.zip
+	zip -r chess.zip . -x@exclude.lst
