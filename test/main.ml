@@ -194,6 +194,34 @@ let board_tests =
     to_string_test "initial board configuration" initial_board_string initial_board;
   ]
 
-let suite = "test suite for Chess" >::: List.flatten [ piece_tests; board_tests ]
+(*Command Module Tests Here*)
+let parse_test (name : string) (str : string) (expected_output : Command.command):
+   test =
+  name >:: fun _ ->
+  assert_equal expected_output (Command.parse str) 
+
+let parse_excep_test (name : string) (str : string) (e : exn):
+   test =
+  name >:: fun _ ->
+  assert_raises e (fun () -> Command.parse str)
+
+let command_tests = 
+  [ parse_test "Input Black should parse to Color Black" "Black" (Color Black);
+    parse_test "Input Black should parse to Color White" "White" (Color White);
+    parse_test "Input    black    should parse to Color Black" "    black    " (Color Black);
+    parse_test "Input WhITe  should parse to Color White" " WhITe  " (Color White);
+    parse_test "Input Quit should parse to Quit" "Quit" (Quit);
+    parse_test "Input  quIT  should parse to Quit" "  quIT  " (Quit);
+    parse_test "Input a3 c6 should parse to Move (0,3) (2,6)" "a3 c6" (Move ((0,3),(2,6)));
+    parse_test "Input a1 h7 should parse to Move (0,1) (7,7)" "a1 h7" (Move ((0,1),(7,7)));
+    parse_excep_test "An empty input should raise Empty" "" Command.Empty;
+    parse_excep_test "An empty input should raise Empty" "    " Command.Empty;
+    parse_excep_test "An input of yellow should raise Malformed" "yellow" Command.Malformed;
+    parse_excep_test "An input of quite should raise Malformed" "quite" Command.Malformed;
+    parse_excep_test "An input of a5 c10 should raise Malformed" "a5 c10" Command.Malformed;
+    parse_excep_test "An input of a7 should raise Malformed" "a7" Command.Malformed;
+  ]
+
+let suite = "test suite for Chess" >::: List.flatten [ piece_tests; board_tests; command_tests ]
 
 let _ = run_test_tt_main suite
