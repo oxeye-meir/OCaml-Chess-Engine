@@ -32,9 +32,6 @@ let pattern_helper f piece =
   | King t -> f t
   | Empty t -> f t
 
-(* white king ♔ white queen ♕ white rook ♖ white bishop ♗ white knight ♘ white pawn ♙ black
-   king ♚ black queen ♛ black rook ♜ black bishop ♝ black knight ♞ black pawn ♟︎ *)
-
 let init_piece name color x y =
   match name with
   | "pawn" ->
@@ -164,6 +161,16 @@ let valid_moves = function
   | Queen t -> List.filter valid_pos (valid_queen_moves t)
   | King t -> List.filter valid_pos (valid_king_moves t)
   | _ -> raise EmptySquare
+
+let move_piece  (x, y) piece =
+  match piece with
+  | Pawn t -> Pawn { t with x; y }
+  | Knight t -> Knight { t with x; y }
+  | Rook t -> Rook { t with x; y }
+  | Bishop t -> Bishop { t with x; y }
+  | King t -> King { t with x; y }
+  | Queen t -> Queen { t with x; y }
+  | Empty t -> Empty { t with x; y }
 
 (* knight moves can be - 1 up, 2 right - 1 up, 2 left - 1 down, 2 right - 1 down, 2 left - 1
    left, 2 up - 1 left, 2 down - 1 right, 2 up - 1 right, 2 down *)

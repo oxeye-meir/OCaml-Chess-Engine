@@ -10,18 +10,34 @@ open Piece
 
 type t = Piece.t list list
 
+exception InvalidPos
+
 (* Helper functions *)
 
 (** Iterate through Board matrix and check if it's empty. *)
-let position_empty board (x, y) =
+let get_piece board (x, y) =
   let row = List.nth board x in
-  let piece = List.nth row y in
+  List.nth row y
+
+let position_empty board (x, y) =
+  let piece = get_piece board (x, y) in
   is_empty piece
+
+let rec replace_piece piece y = function
+  | [] -> raise InvalidPos
+  | h :: t -> if y = 0 then piece :: t else h :: replace_piece piece (y - 1) t
+
+let rec replace_row piece x y = function
+  | [] -> raise InvalidPos
+  | h :: t ->
+      if x = 0 then replace_piece piece y h :: t else h :: replace_row piece (x - 1) y t
 
 (* occupied_squares needs to filter out Empty pieces *)
 let occupied_squares board = board |> List.flatten |> List.map (fun piece -> position piece)
 
 let row_to_string row = List.fold_left (fun acc piece -> acc ^ get_name piece ^ "|") "|" row
+
+let invalid_pos (x, y) = x < 0 || x > 7 || y < 0 || y > 7
 
 (* [[rook b;knight b;bishop b;queen b;king b;bishop b;knight b;rook b]; [pawn b;pawn b;pawn
    b;pawn b;pawn b;pawn b;pawn b;pawn b]; [empty;empty;empty;empty;empty;empty;empty;empty];
@@ -65,7 +81,13 @@ let next_moves board piece =
   let empty_check = position_empty board in
   List.filter empty_check possible_moves
 
-let move board piece = raise (Failure "Unimplemented")
+let move board curr_pos new_pos =
+  if invalid_pos curr_pos || invalid_pos new_pos then raise InvalidPos
+  else
+    let curr_piece_moved = curr_pos |> get_piece board |> move_piece new_pos in
+    let new_piece_moved = new_pos |> get_piece board |> move_piece curr_pos in
+    replace_row new_piece_moved (fst curr_pos) (snd curr_pos) board
+    |> replace_row curr_piece_moved (fst new_pos) (snd new_pos)
 
 let rec to_string (board : t) =
   match board with

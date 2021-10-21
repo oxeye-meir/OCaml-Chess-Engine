@@ -22,3 +22,6 @@ val get_name : t -> string
 val valid_moves : t -> (int * int) list
 (** [valid_moves p] is a tuple list representing the possible next moves of piece p on the
     board. *)
+
+val move_piece : int * int -> t -> t
+(** [move_piece pos piece] is the piece with its position updated to [pos].*)

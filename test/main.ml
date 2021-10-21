@@ -52,6 +52,9 @@ let next_moves_test name expected_output board piece =
   assert_equal ~cmp:cmp_set_like_lists expected_output (next_moves board piece)
     ~printer:(pp_list position_printer)
 
+let invalidpos_test name board curr_pos new_pos =
+  name >:: fun _ -> assert_raises InvalidPos (fun () -> move board curr_pos new_pos)
+
 let initial_board = init_board
 
 let bl_pawn = init_piece "pawn" true 1 0
@@ -179,6 +182,12 @@ let initial_board_string =
   "|♜|♞|♝|♛|♚|♝|♞|♜|" ^ sep ^ "|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|" ^ sep ^ empty ^ sep ^ empty ^ sep ^ empty
   ^ sep ^ empty ^ sep ^ "|♙|♙|♙|♙|♙|♙|♙|♙|" ^ sep ^ "|♖|♘|♗|♕|♔|♗|♘|♖|" ^ sep
 
+let new_board_string =
+  let sep = "\n-----------------\n" in
+  let empty = "| | | | | | | | |" in
+  "| |♞|♝|♛|♚|♝|♞|♜|" ^ sep ^ "|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|" ^ sep ^ empty ^ sep ^ empty ^ sep ^ empty
+  ^ sep ^ "|♜| | | | | | | |" ^ sep ^ "|♙|♙|♙|♙|♙|♙|♙|♙|" ^ sep ^ "|♖|♘|♗|♕|♔|♗|♘|♖|" ^ sep
+
 let board_tests =
   [
     next_moves_test "black pawn's next move is [(2,0)]" [ (2, 0) ] init_board bl_pawn;
@@ -192,28 +201,29 @@ let board_tests =
       initial_board bl_rook;
     next_moves_test "white pawn's next moves is [(5,0)]" [ (5, 0) ] initial_board wh_pawn;
     to_string_test "initial board configuration" initial_board_string initial_board;
+    (let new_board = move initial_board (0, 0) (5, 0) in
+     to_string_test "new board's configuation after moving rook at (5,0)" new_board_string
+       new_board);
+    invalidpos_test "moving to (-1,-1) should raise InvalidPos" initial_board (0, 0) (-1, -1);
   ]
 
 (*Command Module Tests Here*)
-let parse_test (name : string) (str : string) (expected_output : Command.command):
-   test =
-  name >:: fun _ ->
-  assert_equal expected_output (Command.parse str) 
+let parse_test (name : string) (str : string) (expected_output : Command.command) : test =
+  name >:: fun _ -> assert_equal expected_output (Command.parse str)
 
-let parse_excep_test (name : string) (str : string) (e : exn):
-   test =
-  name >:: fun _ ->
-  assert_raises e (fun () -> Command.parse str)
+let parse_excep_test (name : string) (str : string) (e : exn) : test =
+  name >:: fun _ -> assert_raises e (fun () -> Command.parse str)
 
-let command_tests = 
-  [ parse_test "Input Black should parse to Color Black" "Black" (Color Black);
+let command_tests =
+  [
+    parse_test "Input Black should parse to Color Black" "Black" (Color Black);
     parse_test "Input Black should parse to Color White" "White" (Color White);
     parse_test "Input    black    should parse to Color Black" "    black    " (Color Black);
     parse_test "Input WhITe  should parse to Color White" " WhITe  " (Color White);
-    parse_test "Input Quit should parse to Quit" "Quit" (Quit);
-    parse_test "Input  quIT  should parse to Quit" "  quIT  " (Quit);
-    parse_test "Input a3 c6 should parse to Move (0,3) (2,6)" "a3 c6" (Move ((0,3),(2,6)));
-    parse_test "Input a1 h7 should parse to Move (0,1) (7,7)" "a1 h7" (Move ((0,1),(7,7)));
+    parse_test "Input Quit should parse to Quit" "Quit" Quit;
+    parse_test "Input  quIT  should parse to Quit" "  quIT  " Quit;
+    parse_test "Input a3 c6 should parse to Move (0,3) (2,6)" "a3 c6" (Move ((0, 3), (2, 6)));
+    parse_test "Input a1 h7 should parse to Move (0,1) (7,7)" "a1 h7" (Move ((0, 1), (7, 7)));
     parse_excep_test "An empty input should raise Empty" "" Command.Empty;
     parse_excep_test "An empty input should raise Empty" "    " Command.Empty;
     parse_excep_test "An input of yellow should raise Malformed" "yellow" Command.Malformed;
@@ -222,6 +232,7 @@ let command_tests =
     parse_excep_test "An input of a7 should raise Malformed" "a7" Command.Malformed;
   ]
 
-let suite = "test suite for Chess" >::: List.flatten [ piece_tests; board_tests; command_tests ]
+let suite =
+  "test suite for Chess" >::: List.flatten [ piece_tests; board_tests; command_tests ]
 
 let _ = run_test_tt_main suite
