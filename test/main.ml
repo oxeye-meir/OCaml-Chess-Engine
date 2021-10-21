@@ -222,8 +222,8 @@ let command_tests =
     parse_test "Input WhITe  should parse to Color White" " WhITe  " (Color White);
     parse_test "Input Quit should parse to Quit" "Quit" Quit;
     parse_test "Input  quIT  should parse to Quit" "  quIT  " Quit;
-    parse_test "Input a3 c6 should parse to Move (0,3) (2,6)" "a3 c6" (Move ((0, 3), (2, 6)));
-    parse_test "Input a1 h7 should parse to Move (0,1) (7,7)" "a1 h7" (Move ((0, 1), (7, 7)));
+    parse_test "Input a3 c6 should parse to Move (5,0) (2,2)" "a3 c6" (Move ((5, 0), (2, 2)));
+    parse_test "Input a1 h7 should parse to Move (7,0) (1,7)" "a1 h7" (Move ((7, 0), (1, 7)));
     parse_excep_test "An empty input should raise Empty" "" Command.Empty;
     parse_excep_test "An empty input should raise Empty" "    " Command.Empty;
     parse_excep_test "An input of yellow should raise Malformed" "yellow" Command.Malformed;
