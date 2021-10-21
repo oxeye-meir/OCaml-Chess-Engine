@@ -25,3 +25,5 @@ val valid_moves : t -> (int * int) list
 
 val move_piece : int * int -> t -> t
 (** [move_piece pos piece] is the piece with its position updated to [pos].*)
+
+(* val to_string : t -> string * [to_string piece] is a string *)

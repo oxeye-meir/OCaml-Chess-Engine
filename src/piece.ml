@@ -162,7 +162,7 @@ let valid_moves = function
   | King t -> List.filter valid_pos (valid_king_moves t)
   | _ -> raise EmptySquare
 
-let move_piece  (x, y) piece =
+let move_piece (x, y) piece =
   match piece with
   | Pawn t -> Pawn { t with x; y }
   | Knight t -> Knight { t with x; y }
@@ -171,6 +171,13 @@ let move_piece  (x, y) piece =
   | King t -> King { t with x; y }
   | Queen t -> Queen { t with x; y }
   | Empty t -> Empty { t with x; y }
+
+(* let to_string piece = match piece with | Pawn t -> "Pawn (" ^ string_of_int t.x ^ ", " ^
+   string_of_int t.y | King t -> "King (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y |
+   Knight t -> "Knight (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y | Rook t -> "Rook (" ^
+   string_of_int t.x ^ ", " ^ string_of_int t.y | Queen t -> "Queen (" ^ string_of_int t.x ^ ",
+   " ^ string_of_int t.y | Bishop t -> "Bishop (" ^ string_of_int t.x ^ ", " ^ string_of_int
+   t.y | Empty t -> "Empty"*)
 
 (* knight moves can be - 1 up, 2 right - 1 up, 2 left - 1 down, 2 right - 1 down, 2 left - 1
    left, 2 up - 1 left, 2 down - 1 right, 2 up - 1 right, 2 down *)
