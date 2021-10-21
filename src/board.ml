@@ -1,12 +1,4 @@
 open Piece
-(* Board representation: [[(0,0);(0,1);(0,2);(0,3);(0,4);(0,5);(0,6);(0,7)];
-   [(1,0);(1,1);(1,2);(1,3);(1,4);(1,5);(1,6);(1,7)];
-   [(2,0);(2,1);(2,2);(2,3);(2,4);(2,5);(2,6);(2,7)];
-   [(3,0);(3,1);(3,2);(3,3);(3,4);(3,5);(3,6);(3,7)];
-   [(4,0);(4,1);(4,2);(4,3);(4,4);(4,5);(4,6);(4,7)];
-   [(5,0);(5,1);(5,2);(5,3);(5,4);(5,5);(5,6);(5,7)];
-   [(6,0);(6,1);(6,2);(6,3);(6,4);(6,5);(6,6);(6,7)];
-   [(7,0);(7,1);(7,2);(7,3);(7,4);(7,5);(7,6);(7,7)]] *)
 
 type t = Piece.t list list
 
@@ -15,7 +7,7 @@ exception InvalidPos
 (* Helper functions *)
 
 (** Iterate through Board matrix and check if it's empty. *)
-let get_piece board (x, y) =
+let get_piece board (x, y) : Piece.t =
   let row = List.nth board x in
   List.nth row y
 
@@ -46,11 +38,11 @@ let invalid_pos (x, y) = x < 0 || x > 7 || y < 0 || y > 7
    [empty;empty;empty;empty;empty;empty;empty;empty]; [pawn w;pawn w;pawn w;pawn w;pawn w;pawn
    w;pawn w;pawn w]; [rook w;knight w;bishop w;queen w;king w;bishop w;knight w;rook w]] *)
 let rec empty_squares color x y lst =
-  if y <= 7 then empty_squares (not color) x (y + 1) (init_piece "empty" color x y :: lst)
+  if y >= 0 then empty_squares (not color) x (y - 1) (init_piece "empty" color x y :: lst)
   else lst
 
 let rec pawns color x y lst =
-  if y <= 7 then pawns color x (y + 1) (init_piece "pawn" color x y :: lst) else lst
+  if y >= 0 then pawns color x (y - 1) (init_piece "pawn" color x y :: lst) else lst
 
 let backrank color x =
   [
@@ -67,27 +59,32 @@ let backrank color x =
 let init_board =
   [
     backrank true 0;
-    pawns true 1 0 [];
-    empty_squares false 2 0 [];
-    empty_squares true 3 0 [];
-    empty_squares false 4 0 [];
-    empty_squares true 5 0 [];
-    pawns false 6 0 [];
+    pawns true 1 7 [];
+    empty_squares false 2 7 [];
+    empty_squares true 3 7 [];
+    empty_squares false 4 7 [];
+    empty_squares true 5 7 [];
+    pawns false 6 7 [];
     backrank false 7;
   ]
 
 let next_moves board piece =
-  let possible_moves = valid_moves piece in
+  let possible_moves =
+    try valid_moves piece with
+    | EmptySquare -> []
+  in
   let empty_check = position_empty board in
   List.filter empty_check possible_moves
 
-let move board curr_pos new_pos =
-  if invalid_pos curr_pos || invalid_pos new_pos then raise InvalidPos
+let move board (x1, y1) (x2, y2) =
+  (* if invalid_pos (x1, y1) || invalid_pos (x2, y2) then raise InvalidPos else *)
+  let curr_piece = (x1, y1) |> get_piece board in
+  let curr_legal = next_moves board curr_piece in
+  if not (List.mem (x2, y2) curr_legal) then raise InvalidPos
   else
-    let curr_piece_moved = curr_pos |> get_piece board |> move_piece new_pos in
-    let new_piece_moved = new_pos |> get_piece board |> move_piece curr_pos in
-    replace_row new_piece_moved (fst curr_pos) (snd curr_pos) board
-    |> replace_row curr_piece_moved (fst new_pos) (snd new_pos)
+    let curr_piece_moved = move_piece (x2, y2) curr_piece in
+    let new_piece_moved = (x2, y2) |> get_piece board |> move_piece (x1, y1) in
+    replace_row new_piece_moved x1 y1 board |> replace_row curr_piece_moved x2 y2
 
 let rec to_string (board : t) =
   match board with
