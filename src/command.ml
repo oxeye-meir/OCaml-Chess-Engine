@@ -20,7 +20,7 @@ let char_in_range = function
   | _ -> false
 
 let int_in_range = function
-  | '0' .. '7' -> true
+  | '1' .. '8' -> true
   | _ -> false
 
 let pos_of_str str =
@@ -34,6 +34,7 @@ let rec remove_empty = function
   | [] -> []
   | h :: t -> if h = "" then remove_empty t else h :: remove_empty t
 
+(* Parse needs to be able to throw away inputs like: slkdfngbsd,khgblsdkhfgb *)
 let parse str =
   let s = format str in
   let words = remove_empty (String.split_on_char ' ' s) in
