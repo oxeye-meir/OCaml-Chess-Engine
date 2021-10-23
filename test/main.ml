@@ -35,8 +35,8 @@ let pp_list pp_elt lst =
 let position_test name expected_output piece =
   name >:: fun _ -> assert_equal expected_output (position piece) ~printer:position_printer
 
-let get_name_test name expected_output piece =
-  name >:: fun _ -> assert_equal expected_output (get_name piece) ~printer:id
+let name_test name expected_output piece =
+  name >:: fun _ -> assert_equal expected_output (Piece.name piece) ~printer:id
 
 let valid_moves_test name expected_output piece =
   name >:: fun _ ->
@@ -81,11 +81,11 @@ let empty_sq = init_piece "empty" false 2 5
 let piece_tests =
   [
     position_test "position of black pawn is (1,0)" (1, 0) bl_pawn;
-    get_name_test "name of black pawn is ♟︎" "♟︎" bl_pawn;
+    name_test "name of black pawn is ♟︎" "♟︎" bl_pawn;
     position_test "position of empty square is (2,5)" (2, 5) empty_sq;
-    get_name_test "name of empty square is [ ]" " " empty_sq;
-    valid_moves_test "valid move of black pawn is [(2,0)]" [ (2, 0) ] bl_pawn;
-    valid_moves_test "valid move of white pawn is [(5,0)]" [ (5, 0) ] wh_pawn;
+    name_test "name of empty square is [ ]" " " empty_sq;
+    valid_moves_test "valid move of black pawn is [(2,0); (3,0)]" [ (2, 0); (3, 0) ] bl_pawn;
+    valid_moves_test "valid move of white pawn is [(5, 0); (4,0)] " [ (5, 0); (4, 0) ] wh_pawn;
     valid_moves_test "valid move of king is [(1,3);(1,4);(1,5);(2,3);(2,5);(3,3);(3,4);(3,5)]"
       [ (1, 3); (1, 4); (1, 5); (2, 3); (2, 5); (3, 3); (3, 4); (3, 5) ]
       bl_king;
@@ -188,9 +188,16 @@ let new_board_string =
   "| |♞|♝|♛|♚|♝|♞|♜|" ^ sep ^ "|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|" ^ sep ^ empty ^ sep ^ empty ^ sep ^ empty
   ^ sep ^ "|♜| | | | | | | |" ^ sep ^ "|♙|♙|♙|♙|♙|♙|♙|♙|" ^ sep ^ "|♖|♘|♗|♕|♔|♗|♘|♖|" ^ sep
 
+let new_board_string_2 =
+  let sep = "\n-----------------\n" in
+  let empty = "| | | | | | | | |" in
+  "|♜|♞|♝|♛|♚|♝|♞|♜|" ^ sep ^ "|♟︎|♟︎|♟︎|♟︎| |♟︎|♟︎|♟︎|" ^ sep ^ empty ^ sep ^ "| | | | |♟︎| | | |"
+  ^ sep ^ empty ^ sep ^ empty ^ sep ^ "|♙|♙|♙|♙|♙|♙|♙|♙|" ^ sep ^ "|♖|♘|♗|♕|♔|♗|♘|♖|" ^ sep
+
 let board_tests =
   [
-    next_moves_test "black pawn's next move is [(2,0)]" [ (2, 0) ] init_board bl_pawn;
+    next_moves_test "black pawn's next move is [ (2, 0); (3,0) ] " [ (2, 0); (3, 0) ]
+      init_board bl_pawn;
     next_moves_test
       "initial black queen's next move is [(2, 3);(3, 3);(4, 3);(5, 3);(2, 1);(3, 0);(2, \
        5);(3, 6);(4, 7);]"
@@ -199,12 +206,16 @@ let board_tests =
     next_moves_test "black rook's next moves is [(2, 0); (3, 0); (4, 0); (5, 0)]"
       [ (2, 0); (3, 0); (4, 0); (5, 0) ]
       initial_board bl_rook;
-    next_moves_test "white pawn's next moves is [(5,0)]" [ (5, 0) ] initial_board wh_pawn;
+    next_moves_test "white pawn's next moves is [ (5, 0); (4,0)] " [ (5, 0); (4, 0) ]
+      initial_board wh_pawn;
     to_string_test "initial board configuration" initial_board_string initial_board;
     (let new_board = move initial_board (0, 0) (5, 0) in
      to_string_test "new board's configuation after moving rook at (5,0)" new_board_string
        new_board);
     invalidpos_test "moving to (-1,-1) should raise InvalidPos" initial_board (0, 0) (-1, -1);
+    (let new_board_2 = move initial_board (1, 4) (3, 4) in
+     to_string_test "new board's configuation after moving black pawn at (1,4)"
+       new_board_string_2 new_board_2);
   ]
 
 (*Command Module Tests Here*)

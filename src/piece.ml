@@ -7,6 +7,7 @@ exception InvalidPiece of string
 type piece_info = {
   name : string;
   color : color;
+  moves : int;
   x : int;
   y : int;
 }
@@ -36,23 +37,23 @@ let init_piece name color x y =
   match name with
   | "pawn" ->
       let piece_name = if color then "♟︎" else "♙" in
-      Pawn { name = piece_name; color; x; y }
+      Pawn { name = piece_name; moves = 0; color; x; y }
   | "knight" ->
       let piece_name = if color then "♞" else "♘" in
-      Knight { name = piece_name; color; x; y }
+      Knight { name = piece_name; moves = 0; color; x; y }
   | "rook" ->
       let piece_name = if color then "♜" else "♖" in
-      Rook { name = piece_name; color; x; y }
+      Rook { name = piece_name; moves = 0; color; x; y }
   | "bishop" ->
       let piece_name = if color then "♝" else "♗" in
-      Bishop { name = piece_name; color; x; y }
+      Bishop { name = piece_name; moves = 0; color; x; y }
   | "king" ->
       let piece_name = if color then "♚" else "♔" in
-      King { name = piece_name; color; x; y }
+      King { name = piece_name; moves = 0; color; x; y }
   | "queen" ->
       let piece_name = if color then "♛" else "♕" in
-      Queen { name = piece_name; color; x; y }
-  | "empty" -> Empty { name = " "; color; x; y }
+      Queen { name = piece_name; moves = 0; color; x; y }
+  | "empty" -> Empty { name = " "; moves = 0; color; x; y }
   | _ -> raise (InvalidPiece name)
 
 let is_empty piece =
@@ -62,21 +63,18 @@ let is_empty piece =
 
 let position piece = pattern_helper (fun piece_info -> (piece_info.x, piece_info.y)) piece
 
-let get_name piece = pattern_helper (fun piece_info -> piece_info.name) piece
+let name piece = pattern_helper (fun piece_info -> piece_info.name) piece
+
+let moves piece = pattern_helper (fun piece_info -> piece_info.moves) piece
 
 let valid_pos (x, y) = x <= 7 && x >= 0 && y >= 0 && y <= 7
 
-(* [[(0,0);(0,1);(0,2);(0,3);(0,4);(0,5);(0,6);(0,7)];
-   [(1,0);(1,1);(1,2);(1,3);(1,4);(1,5);(1,6);(1,7)];
-   [(2,0);(2,1);(2,2);(2,3);(2,4);(2,5);(2,6);(2,7)];
-   [(3,0);(3,1);(3,2);(3,3);(3,4);(3,5);(3,6);(3,7)];
-   [(4,0);(4,1);(4,2);(4,3);(4,4);(4,5);(4,6);(4,7)];
-   [(5,0);(5,1);(5,2);(5,3);(5,4);(5,5);(5,6);(5,7)];
-   [(6,0);(6,1);(6,2);(6,3);(6,4);(6,5);(6,6);(6,7)];
-   [(7,0);(7,1);(7,2);(7,3);(7,4);(7,5);(7,6);(7,7)]] *)
-
 let valid_pawn_moves (pawn : piece_info) : (int * int) list =
-  if pawn.color then [ (pawn.x + 1, pawn.y) ] else [ (pawn.x - 1, pawn.y) ]
+  let black_moves = [ (pawn.x + 1, pawn.y) ] in
+  let white_moves = [ (pawn.x - 1, pawn.y) ] in
+  match pawn.color with
+  | true -> if pawn.moves = 0 then (pawn.x + 2, pawn.y) :: black_moves else black_moves
+  | false -> if pawn.moves = 0 then (pawn.x - 2, pawn.y) :: white_moves else white_moves
 
 let rec rook_updown row y current_list =
   if row <= 7 then rook_updown (row + 1) y ((row, y) :: current_list) else current_list
@@ -164,13 +162,13 @@ let valid_moves = function
 
 let move_piece (x, y) piece =
   match piece with
-  | Pawn t -> Pawn { t with x; y }
-  | Knight t -> Knight { t with x; y }
-  | Rook t -> Rook { t with x; y }
-  | Bishop t -> Bishop { t with x; y }
-  | King t -> King { t with x; y }
-  | Queen t -> Queen { t with x; y }
-  | Empty t -> Empty { t with x; y }
+  | Pawn t -> Pawn { t with moves = t.moves + 1; x; y }
+  | Knight t -> Knight { t with moves = t.moves + 1; x; y }
+  | Rook t -> Rook { t with moves = t.moves + 1; x; y }
+  | Bishop t -> Bishop { t with moves = t.moves + 1; x; y }
+  | King t -> King { t with moves = t.moves + 1; x; y }
+  | Queen t -> Queen { t with moves = t.moves + 1; x; y }
+  | Empty t -> Empty { t with moves = t.moves + 1; x; y }
 
 (* let to_string piece = match piece with | Pawn t -> "Pawn (" ^ string_of_int t.x ^ ", " ^
    string_of_int t.y | King t -> "King (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y |

@@ -22,7 +22,7 @@ let rec replace_row piece x y = function
   | h :: t ->
       if x = 0 then replace_piece piece y h :: t else h :: replace_row piece (x - 1) y t
 
-let row_to_string row = List.fold_left (fun acc piece -> acc ^ get_name piece ^ "|") "|" row
+let row_to_string row = List.fold_left (fun acc piece -> acc ^ name piece ^ "|") "|" row
 
 let invalid_pos (x, y) = x < 0 || x > 7 || y < 0 || y > 7
 
@@ -57,6 +57,11 @@ let init_board =
     backrank false 7;
   ]
 
+ (* let diagonal_check board (x, y) = 
+  Top-right diagonal
+  if (x+1, y+1)  *)
+
+  
 let next_moves board piece =
   let possible_moves =
     try valid_moves piece with
