@@ -195,27 +195,27 @@ let new_board_string_2 =
   ^ sep ^ empty ^ sep ^ empty ^ sep ^ "|♙|♙|♙|♙|♙|♙|♙|♙|" ^ sep ^ "|♖|♘|♗|♕|♔|♗|♘|♖|" ^ sep
 
 let board_tests =
+  let new_board_2 = move initial_board (1, 4) (3, 4) in
   [
     next_moves_test "black pawn's next move is [ (2, 0); (3,0) ] " [ (2, 0); (3, 0) ]
       init_board bl_pawn;
-    next_moves_test
-      "initial black queen's next move is [(2, 3);(3, 3);(4, 3);(5, 3);(2, 1);(3, 0);(2, \
-       5);(3, 6);(4, 7);]"
-      [ (2, 3); (3, 3); (4, 3); (5, 3); (2, 1); (3, 0); (2, 5); (3, 6); (4, 7) ]
-      init_board initial_bl_queen;
-    next_moves_test "black rook's next moves is [(2, 0); (3, 0); (4, 0); (5, 0)]"
-      [ (2, 0); (3, 0); (4, 0); (5, 0) ]
-      initial_board bl_rook;
+    next_moves_test "initial black queen's next move is []" [] init_board initial_bl_queen;
+ next_moves_test "next moves of bishop is [(1,1);(2,0);(1,3);(2,4);(3,5);(4,6);(5,7)]"
+     [(2, 0); (2, 4); (3, 5); (4, 6); (5, 7) ] init_board
+      bl_bishop;    (* next_moves_test "black rook's next moves is [(2, 0); (3, 0); (4, 0); (5, 0)]" [ (2, 0);
+       (3, 0); (4, 0); (5, 0) ] initial_board bl_rook; *)
+    (* (let new_board = move initial_board (0, 0) (5, 0) in to_string_test "new board's
+       configuation after moving rook at (5,0)" new_board_string new_board); *)
     next_moves_test "white pawn's next moves is [ (5, 0); (4,0)] " [ (5, 0); (4, 0) ]
       initial_board wh_pawn;
     to_string_test "initial board configuration" initial_board_string initial_board;
-    (let new_board = move initial_board (0, 0) (5, 0) in
-     to_string_test "new board's configuation after moving rook at (5,0)" new_board_string
-       new_board);
+    next_moves_test "black rook's next moves after moving a pawn is [(1,0); (2,0)]"
+      [ (1, 0); (2, 0) ]
+      (move initial_board (1, 0) (3, 0))
+      bl_rook;
     invalidpos_test "moving to (-1,-1) should raise InvalidPos" initial_board (0, 0) (-1, -1);
-    (let new_board_2 = move initial_board (1, 4) (3, 4) in
-     to_string_test "new board's configuation after moving black pawn at (1,4)"
-       new_board_string_2 new_board_2);
+    to_string_test "new board's configuation after moving black pawn at (1,4)"
+      new_board_string_2 new_board_2;
   ]
 
 (*Command Module Tests Here*)
