@@ -23,8 +23,7 @@ type t =
 
 (** [pattern_helper f piece] is the result of applying function [f] on [piece] by
     pattern-matching [piece] against the possible pieces. *)
-let pattern_helper f piece =
-  match piece with
+let pattern_helper f = function
   | Pawn t -> f t
   | Rook t -> f t
   | Knight t -> f t
@@ -64,6 +63,8 @@ let is_empty piece =
 let position piece = pattern_helper (fun piece_info -> (piece_info.x, piece_info.y)) piece
 
 let name piece = pattern_helper (fun piece_info -> piece_info.name) piece
+
+let color piece = pattern_helper (fun piece_info -> piece_info.color) piece
 
 let moves piece = pattern_helper (fun piece_info -> piece_info.moves) piece
 
@@ -160,9 +161,16 @@ let valid_moves = function
   | King t -> List.filter valid_pos (valid_king_moves t)
   | _ -> raise EmptySquare
 
+let pawn_move (x, y) t =
+  let bl_promotion = t.color && x = 7 in
+  let wh_promotion = (not t.color) && x = 0 in
+  let name = if bl_promotion then "♛" else if wh_promotion then "♕" else t.name in
+  let new_info = { t with name; moves = t.moves + 1; x; y } in
+  if bl_promotion || wh_promotion then Queen new_info else Pawn new_info
+
 let move_piece (x, y) piece =
   match piece with
-  | Pawn t -> Pawn { t with moves = t.moves + 1; x; y }
+  | Pawn t -> pawn_move (x, y) t
   | Knight t -> Knight { t with moves = t.moves + 1; x; y }
   | Rook t -> Rook { t with moves = t.moves + 1; x; y }
   | Bishop t -> Bishop { t with moves = t.moves + 1; x; y }
@@ -170,12 +178,27 @@ let move_piece (x, y) piece =
   | Queen t -> Queen { t with moves = t.moves + 1; x; y }
   | Empty t -> Empty { t with moves = t.moves + 1; x; y }
 
-(* let to_string piece = match piece with | Pawn t -> "Pawn (" ^ string_of_int t.x ^ ", " ^
-   string_of_int t.y | King t -> "King (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y |
-   Knight t -> "Knight (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y | Rook t -> "Rook (" ^
-   string_of_int t.x ^ ", " ^ string_of_int t.y | Queen t -> "Queen (" ^ string_of_int t.x ^ ",
-   " ^ string_of_int t.y | Bishop t -> "Bishop (" ^ string_of_int t.x ^ ", " ^ string_of_int
-   t.y | Empty t -> "Empty"*)
+let to_string piece =
+  match piece with
+  | Pawn t ->
+      "Pawn " ^ string_of_bool t.color ^ " (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y
+      ^ ")"
+  | King t ->
+      "King " ^ string_of_bool t.color ^ " (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y
+      ^ ")"
+  | Knight t ->
+      "Knight " ^ string_of_bool t.color ^ " (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y
+      ^ ")"
+  | Rook t ->
+      "Rook " ^ string_of_bool t.color ^ " (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y
+      ^ ")"
+  | Queen t ->
+      "Queen " ^ string_of_bool t.color ^ " (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y
+      ^ ")"
+  | Bishop t ->
+      "Bishop " ^ string_of_bool t.color ^ " (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y
+      ^ ")"
+  | Empty t -> "Empty (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y ^ ")"
 
 (* knight moves can be - 1 up, 2 right - 1 up, 2 left - 1 down, 2 right - 1 down, 2 left - 1
    left, 2 up - 1 left, 2 down - 1 right, 2 up - 1 right, 2 down *)

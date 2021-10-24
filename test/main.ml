@@ -67,9 +67,9 @@ let bl_rook = init_piece "rook" true 0 0
 
 let bl_knight = init_piece "knight" true 0 1
 
-let initial_wh_knight_L = init_piece "knight" true 7 1
+let initial_wh_knight_L = init_piece "knight" false 7 1
 
-let initial_wh_knight_R = init_piece "knight" true 7 6
+let initial_wh_knight_R = init_piece "knight" false 7 6
 
 let bl_bishop = init_piece "bishop" true 0 2
 
