@@ -67,6 +67,10 @@ let bl_rook = init_piece "rook" true 0 0
 
 let bl_knight = init_piece "knight" true 0 1
 
+let initial_wh_knight_L = init_piece "knight" true 7 1
+
+let initial_wh_knight_R = init_piece "knight" true 7 6
+
 let bl_bishop = init_piece "bishop" true 0 2
 
 let bl_queen = init_piece "queen" true 3 3
@@ -185,8 +189,8 @@ let initial_board_string =
 let new_board_string =
   let sep = "\n-----------------\n" in
   let empty = "| | | | | | | | |" in
-  "| |♞|♝|♛|♚|♝|♞|♜|" ^ sep ^ "|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|" ^ sep ^ empty ^ sep ^ empty ^ sep ^ empty
-  ^ sep ^ "|♜| | | | | | | |" ^ sep ^ "|♙|♙|♙|♙|♙|♙|♙|♙|" ^ sep ^ "|♖|♘|♗|♕|♔|♗|♘|♖|" ^ sep
+  "|♜|♞|♝|♛|♚|♝|♞|♜|" ^ sep ^ "| |♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|" ^ sep ^ empty ^ sep ^ "|♟︎| | | | | | | |"
+  ^ sep ^ empty ^ sep ^ empty ^ sep ^ "|♙|♙|♙|♙|♙|♙|♙|♙|" ^ sep ^ "|♖|♘|♗|♕|♔|♗|♘|♖|" ^ sep
 
 let new_board_string_2 =
   let sep = "\n-----------------\n" in
@@ -200,12 +204,16 @@ let board_tests =
     next_moves_test "black pawn's next move is [ (2, 0); (3,0) ] " [ (2, 0); (3, 0) ]
       init_board bl_pawn;
     next_moves_test "initial black queen's next move is []" [] init_board initial_bl_queen;
- next_moves_test "next moves of bishop is [(1,1);(2,0);(1,3);(2,4);(3,5);(4,6);(5,7)]"
-     [(2, 0); (2, 4); (3, 5); (4, 6); (5, 7) ] init_board
-      bl_bishop;    (* next_moves_test "black rook's next moves is [(2, 0); (3, 0); (4, 0); (5, 0)]" [ (2, 0);
-       (3, 0); (4, 0); (5, 0) ] initial_board bl_rook; *)
-    (* (let new_board = move initial_board (0, 0) (5, 0) in to_string_test "new board's
-       configuation after moving rook at (5,0)" new_board_string new_board); *)
+    next_moves_test "next moves of bishop is []" [] init_board bl_bishop;
+    next_moves_test "black rook's next moves is [(2, 0); (3, 0); (4, 0); (5, 0)]" []
+      initial_board bl_rook;
+    next_moves_test "left white knight's next moves is [(5, 0); (5, 2)]" [ (5, 0); (5, 2) ]
+      initial_board initial_wh_knight_L;
+    next_moves_test "right white knight's next moves is [(5, 7); (5, 5)]" [ (5, 7); (5, 5) ]
+      initial_board initial_wh_knight_R;
+    (let new_board = move initial_board (1, 0) (3, 0) in
+     to_string_test "new board's configuation after moving pawn at (1,0)" new_board_string
+       new_board);
     next_moves_test "white pawn's next moves is [ (5, 0); (4,0)] " [ (5, 0); (4, 0) ]
       initial_board wh_pawn;
     to_string_test "initial board configuration" initial_board_string initial_board;
@@ -227,16 +235,14 @@ let parse_excep_test (name : string) (str : string) (e : exn) : test =
 
 let command_tests =
   [
-    parse_test "Input Black should parse to Color Black" "Black" (Color Black);
-    parse_test "Input Black should parse to Color White" "White" (Color White);
-    parse_test "Input    black    should parse to Color Black" "    black    " (Color Black);
-    parse_test "Input WhITe  should parse to Color White" " WhITe  " (Color White);
+    parse_test "Input reset shoud parse to Reset" "reset" Reset;
+    parse_test "Input rEsEt shoud parse to Reset" "rEsEt" Reset;
     parse_test "Input Quit should parse to Quit" "Quit" Quit;
     parse_test "Input  quIT  should parse to Quit" "  quIT  " Quit;
     parse_test "Input a3 c6 should parse to Move (5,0) (2,2)" "a3 c6" (Move ((5, 0), (2, 2)));
     parse_test "Input a1 h7 should parse to Move (7,0) (1,7)" "a1 h7" (Move ((7, 0), (1, 7)));
-    parse_excep_test "An empty input should raise Empty" "" Command.Empty;
-    parse_excep_test "An empty input should raise Empty" "    " Command.Empty;
+    parse_excep_test "An empty input should raise Malformed" "" Command.Malformed;
+    parse_excep_test "An empty input should raise Malformed" "    " Command.Malformed;
     parse_excep_test "An input of yellow should raise Malformed" "yellow" Command.Malformed;
     parse_excep_test "An input of quite should raise Malformed" "quite" Command.Malformed;
     parse_excep_test "An input of a5 c10 should raise Malformed" "a5 c10" Command.Malformed;

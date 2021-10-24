@@ -16,54 +16,56 @@ let print_rules () =
 
 (*print_invalid_move is not used anywhere yet*)
 let print_invalid_move () =
-  ANSITerminal.print_string [ ANSITerminal.red ] "Invalid move. Please try again \n";
-  print_string "> "
+  ANSITerminal.print_string [ ANSITerminal.red ] "Invalid move. Please try again! \n"
 
-let init_board_print () =
-  ANSITerminal.print_string [ ANSITerminal.white ] (init_board |> to_string)
+let print_reset () =
+  ANSITerminal.print_string [ ANSITerminal.cyan ] "You have restarted your game! \n"
 
 let print_board board = board |> to_string |> print_string
 
 let get_command (input : string) : position * position =
   let command =
     try Chess.Command.parse input with
-    | Chess.Command.Empty -> Move ((-1, -1), (-1, -1))
     | Chess.Command.Malformed -> Move ((-1, -1), (-1, -1))
   in
   match command with
-  | Color color -> ((-1, -1), (-1, -1))
   | Move (loc, dst) -> (loc, dst)
+  | Reset -> ((-99, -99), (-99, -99))
   | Quit ->
       print_quit ();
       exit 0
 
+let initial_state = Chess.Board.init_board
 (* let position_printer (x, y) = "(" ^ string_of_int x ^ ", " ^ string_of_int y ^ ")" *)
 
-let rec get_current_board board =
+let rec get_current_board board reset invalid =
   print_board board;
+  if invalid then print_invalid_move () else if reset then print_reset ();
   print_string "Your move> ";
-  let input = read_line () |> String.trim in
+  let input = read_line () in
   let command = get_command input in
   let start_coord = fst command in
   (* position_printer start_coord |> print_string; *)
   let end_coord = snd command in
   (* position_printer start_coord |> print_string; *)
+  let reset_value = fst start_coord = -99 in
   let next_board =
-    try Chess.Board.move board start_coord end_coord with
-    | InvalidPos ->
-        print_invalid_move ();
-        board
+    if reset_value then initial_state
+    else
+      try Chess.Board.move board start_coord end_coord with
+      | InvalidPos -> get_current_board board reset_value true
   in
-  get_current_board next_board
-
-let initial_state = Chess.Board.init_board
+  get_current_board next_board reset_value false
 
 (** [main ()] prompts for the game to play, then starts it. *)
 let main () =
-  ANSITerminal.print_string [ ANSITerminal.blue ] "\n\nWelcome to the Chess Game engine.\n";
-  print_rules ();
-
-  get_current_board initial_state
+  let start =
+    ANSITerminal.print_string [ ANSITerminal.blue ] "\n\nWelcome to the Chess Game engine.\n";
+    print_rules ();
+    let board_operate = get_current_board initial_state false false |> print_board in
+    board_operate
+  in
+  start
 
 (* Execute the game engine. *)
 let () = main ()

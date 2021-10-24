@@ -59,60 +59,43 @@ let init_board =
     backrank false 7;
   ]
 
-let rec left_diagonal board (x, y) lst = function
-  | true ->
-      if x >= 1 && y >= 1 && is_empty (get_piece board (x - 1, y - 1)) then
-        left_diagonal board (x - 1, y - 1) ((x - 1, y - 1) :: lst) true
-      else lst
-  | false ->
-      if x <= 6 && y <= 6 && is_empty (get_piece board (x + 1, y + 1)) then
-        left_diagonal board (x + 1, y + 1) ((x + 1, y + 1) :: lst) false
-      else lst
+let valid_position board (x, y) =
+  (not (invalid_pos (x, y))) && is_empty (get_piece board (x, y))
 
-let rec right_diagonal board (x, y) lst = function
-  | true ->
-      if x >= 1 && y <= 6 && is_empty (get_piece board (x - 1, y + 1)) then
-        right_diagonal board (x - 1, y + 1) ((x - 1, y + 1) :: lst) true
-      else lst
-  | false ->
-      if x <= 6 && y >= 1 && is_empty (get_piece board (x + 1, y - 1)) then
-        right_diagonal board (x + 1, y - 1) ((x + 1, y - 1) :: lst) false
-      else lst
-
-let rec vertical_check board (x, y) lst = function
-  | true ->
-      if x >= 1 && is_empty (get_piece board (x - 1, y)) then
-        vertical_check board (x - 1, y) ((x - 1, y) :: lst) true
-      else lst
-  | false ->
-      if x <= 6 && is_empty (get_piece board (x + 1, y)) then
-        vertical_check board (x + 1, y) ((x + 1, y) :: lst) false
-      else lst
-
-let rec horizontal_check board (x, y) lst = function
-  | true ->
-      if y >= 1 && is_empty (get_piece board (x, y - 1)) then
-        horizontal_check board (x, y - 1) ((x, y - 1) :: lst) true
-      else lst
-  | false ->
-      if y <= 6 && is_empty (get_piece board (x, y + 1)) then
-        horizontal_check board (x, y + 1) ((x, y + 1) :: lst) false
-      else lst
+let rec valid_check board (x, y) transformation lst =
+  let next_pos = transformation (x, y) in
+  let pos_added = next_pos :: lst in
+  if valid_position board next_pos then valid_check board next_pos transformation pos_added
+  else lst
 
 let next_moves board piece =
   let possible_moves =
     try valid_moves piece with
     | EmptySquare -> []
   in
-  let left_dgl_moves = left_diagonal board (position piece) [] in
-  let right_dgl_moves = right_diagonal board (position piece) [] in
-  let horizontal_moves = horizontal_check board (position piece) [] in
-  let vertical_moves = vertical_check board (position piece) [] in
-  let total_lst =
-    horizontal_moves true @ horizontal_moves false @ vertical_moves true @ vertical_moves false
-    @ left_dgl_moves true @ left_dgl_moves false @ right_dgl_moves true @ right_dgl_moves false
+  let not_jumpable_pieces =
+    Piece.name piece <> "♞"
+    && Piece.name piece <> "♘"
+    && Piece.name piece <> "♚"
+    && Piece.name piece <> "♔"
   in
-  List.filter (fun x -> List.mem x total_lst) possible_moves
+  if not_jumpable_pieces then
+    let piece_position = position piece in
+    let up_moves = valid_check board piece_position (fun (x, y) -> (x - 1, y)) [] in
+    let down_moves = valid_check board piece_position (fun (x, y) -> (x + 1, y)) [] in
+    let left_moves = valid_check board piece_position (fun (x, y) -> (x, y - 1)) [] in
+    let right_moves = valid_check board piece_position (fun (x, y) -> (x, y + 1)) [] in
+    let tl_moves = valid_check board piece_position (fun (x, y) -> (x - 1, y - 1)) [] in
+    let tr_moves = valid_check board piece_position (fun (x, y) -> (x - 1, y + 1)) [] in
+    let bl_moves = valid_check board piece_position (fun (x, y) -> (x + 1, y - 1)) [] in
+    let br_moves = valid_check board piece_position (fun (x, y) -> (x + 1, y + 1)) [] in
+    let total_lst =
+      up_moves @ down_moves @ left_moves @ right_moves @ tl_moves @ tr_moves @ bl_moves
+      @ br_moves
+    in
+    List.filter (fun x -> List.mem x total_lst) possible_moves
+  else List.filter (fun x -> valid_position board x) possible_moves
+(* let printer = print_string "Knight move" in printer; possible_moves *)
 
 let move board (x1, y1) (x2, y2) =
   if invalid_pos (x1, y1) || invalid_pos (x2, y2) then raise InvalidPos
