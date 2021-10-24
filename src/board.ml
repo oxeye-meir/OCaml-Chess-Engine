@@ -1,6 +1,9 @@
 open Piece
 
-type t = Piece.t list list
+type t = {
+  board : Piece.t list list;
+  color : bool;
+}
 
 exception InvalidPos
 
@@ -43,17 +46,23 @@ let backrank color x =
     init_piece "rook" color x 7;
   ]
 
+let turn board = board.color
+
 let init_board =
-  [
-    backrank true 0;
-    pawns true 1 7 [];
-    empty_squares false 2 7 [];
-    empty_squares true 3 7 [];
-    empty_squares false 4 7 [];
-    empty_squares true 5 7 [];
-    pawns false 6 7 [];
-    backrank false 7;
-  ]
+  {
+    board =
+      [
+        backrank true 0;
+        pawns true 1 7 [];
+        empty_squares false 2 7 [];
+        empty_squares true 3 7 [];
+        empty_squares false 4 7 [];
+        empty_squares true 5 7 [];
+        pawns false 6 7 [];
+        backrank false 7;
+      ];
+    color = false;
+  }
 
 let empty_position board (x, y) = is_empty (get_piece board (x, y))
 
@@ -89,6 +98,7 @@ let pp_list pp_elt lst =
   "[" ^ pp_elts lst ^ "]"
 
 let next_moves board piece =
+  let board = board.board in
   let possible_moves =
     try valid_moves piece with
     | EmptySquare -> []
@@ -112,15 +122,6 @@ let next_moves board piece =
       |> valid_check board color position (fun (x, y) -> (x + 1, y - 1))
       |> valid_check board color position (fun (x, y) -> (x + 1, y + 1))
     in
-    (* let up_moves = valid_check board piece (fun (x, y) -> (x - 1, y)) [] in let down_moves =
-       valid_check board piece (fun (x, y) -> (x + 1, y)) [] in let left_moves = valid_check
-       board piece (fun (x, y) -> (x, y - 1)) [] in let right_moves = valid_check board piece
-       (fun (x, y) -> (x, y + 1)) [] in let tl_moves = valid_check board piece (fun (x, y) ->
-       (x - 1, y - 1)) [] in let tr_moves = valid_check board piece (fun (x, y) -> (x - 1, y +
-       1)) [] in let bl_moves = valid_check board piece (fun (x, y) -> (x + 1, y - 1)) [] in
-       let br_moves = valid_check board piece (fun (x, y) -> (x + 1, y + 1)) [] in let
-       total_lst = up_moves @ down_moves @ left_moves @ right_moves @ tl_moves @ tr_moves @
-       bl_moves @ br_moves in *)
     List.filter (fun x -> List.mem x total_lst) possible_moves
   else
     List.filter
@@ -129,23 +130,34 @@ let next_moves board piece =
 
 (* let printer = print_string "Knight move" in printer; possible_moves *)
 
-let move board (x1, y1) (x2, y2) =
+let move big_board (x1, y1) (x2, y2) =
+  let board = big_board.board in
+  let color = big_board.color in
   let curr_piece = (x1, y1) |> get_piece board in
-  let curr_legal = next_moves board curr_piece in
-  if not (List.mem (x2, y2) curr_legal) then raise InvalidPos
+  if Piece.color curr_piece <> color then raise InvalidPos
   else
-    let new_piece = get_piece board (x2, y2) in
-    let curr_piece_moved = move_piece (x2, y2) curr_piece in
-    if is_empty new_piece then
-      (* Moving to an empty square by swapping positions*)
-      let new_piece_moved = move_piece (x1, y1) new_piece in
-      replace_row new_piece_moved x1 y1 board |> replace_row curr_piece_moved x2 y2
+    let curr_legal = next_moves big_board curr_piece in
+    if not (List.mem (x2, y2) curr_legal) then raise InvalidPos
     else
-      (* Capturing by replacing an occupied square w/ empty piece *)
-      replace_row (init_piece "empty" false x1 y1) x1 y1 board
-      |> replace_row curr_piece_moved x2 y2
+      let new_piece = get_piece board (x2, y2) in
+      let curr_piece_moved = move_piece (x2, y2) curr_piece in
+      if is_empty new_piece then
+        (* Moving to an empty square by swapping positions*)
+        let new_piece_moved = move_piece (x1, y1) new_piece in
+        let new_board =
+          replace_row new_piece_moved x1 y1 board |> replace_row curr_piece_moved x2 y2
+        in
+        { board = new_board; color = not color }
+      else
+        (* Capturing by replacing an occupied square w/ empty piece *)
+        let new_board =
+          replace_row (init_piece "empty" false x1 y1) x1 y1 board
+          |> replace_row curr_piece_moved x2 y2
+        in
+        { board = new_board; color = not color }
 
 let rec to_string (board : t) =
-  match board with
+  match board.board with
   | [] -> ""
-  | h :: t -> row_to_string h ^ "\n-----------------\n" ^ to_string t
+  | h :: t ->
+      row_to_string h ^ "\n-----------------\n" ^ to_string { board = t; color = board.color }

@@ -41,7 +41,8 @@ let initial_state = Chess.Board.init_board
 let rec get_current_board board reset invalid =
   print_board board;
   if invalid then print_invalid_move () else if reset then print_reset ();
-  print_string "Your move> ";
+  let turn_color = turn board in
+  if turn_color then print_string "Black move> " else print_string "White move> ";
   let input = read_line () in
   let command = get_command input in
   let start_coord = fst command in

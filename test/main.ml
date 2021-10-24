@@ -195,11 +195,13 @@ let new_board_string =
 let new_board_string_2 =
   let sep = "\n-----------------\n" in
   let empty = "| | | | | | | | |" in
-  "|♜|♞|♝|♛|♚|♝|♞|♜|" ^ sep ^ "|♟︎|♟︎|♟︎|♟︎| |♟︎|♟︎|♟︎|" ^ sep ^ empty ^ sep ^ "| | | | |♟︎| | | |"
-  ^ sep ^ empty ^ sep ^ empty ^ sep ^ "|♙|♙|♙|♙|♙|♙|♙|♙|" ^ sep ^ "|♖|♘|♗|♕|♔|♗|♘|♖|" ^ sep
+  "|♜|♞|♝|♛|♚|♝|♞|♜|" ^ sep ^ "|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|" ^ sep ^ empty ^ sep ^ empty ^ sep
+  ^ "| | | | |♙| | | |" ^ sep ^ empty ^ sep ^ "|♙|♙|♙|♙| |♙|♙|♙|" ^ sep ^ "|♖|♘|♗|♕|♔|♗|♘|♖|"
+  ^ sep
 
 let board_tests =
-  let new_board_2 = move initial_board (1, 4) (3, 4) in
+  let wh_rook = init_piece "rook" false 7 0 in
+  let new_board_2 = move initial_board (6, 4) (4, 4) in
   [
     next_moves_test "black pawn's next move is [ (2, 0); (3,0) ] " [ (2, 0); (3, 0) ]
       init_board bl_pawn;
@@ -211,18 +213,16 @@ let board_tests =
       initial_board initial_wh_knight_L;
     next_moves_test "right white knight's next moves is [(5, 7); (5, 5)]" [ (5, 7); (5, 5) ]
       initial_board initial_wh_knight_R;
-    (let new_board = move initial_board (1, 0) (3, 0) in
-     to_string_test "new board's configuation after moving pawn at (1,0)" new_board_string
-       new_board);
     next_moves_test "white pawn's next moves is [ (5, 0); (4,0)] " [ (5, 0); (4, 0) ]
       initial_board wh_pawn;
     to_string_test "initial board configuration" initial_board_string initial_board;
-    next_moves_test "black rook's next moves after moving a pawn is [(1,0); (2,0)]"
-      [ (1, 0); (2, 0) ]
-      (move initial_board (1, 0) (3, 0))
-      bl_rook;
+    next_moves_test "white rook's next moves after moving a pawn is [(6,0); (5,0)]"
+      [ (6, 0); (5, 0) ]
+      (move initial_board (6, 0) (4, 0))
+      wh_rook;
     invalidpos_test "moving to (-1,-1) should raise InvalidPos" initial_board (0, 0) (-1, -1);
-    to_string_test "new board's configuation after moving black pawn at (1,4)"
+    invalidpos_test "moving the wrong color should raise InvalidPos" initial_board (1, 0) (3, 0);
+    to_string_test "new board's configuation after moving white pawn at (6,4)"
       new_board_string_2 new_board_2;
   ]
 
