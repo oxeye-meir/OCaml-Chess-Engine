@@ -1,7 +1,9 @@
 open Piece
 
+type board = Piece.t list list
+
 type t = {
-  board : Piece.t list list;
+  board : board;
   color : bool;
 }
 
@@ -9,12 +11,6 @@ exception InvalidPos
 
 (* Helper functions *)
 let invalid_pos (x, y) = x < 0 || x > 7 || y < 0 || y > 7
-
-let get_piece board (x, y) : Piece.t =
-  if invalid_pos (x, y) then raise InvalidPos
-  else
-    let row = List.nth board x in
-    List.nth row y
 
 let rec replace_piece piece y = function
   | [] -> raise InvalidPos
@@ -47,6 +43,14 @@ let backrank color x =
   ]
 
 let turn board = board.color
+
+let get_board board = board.board
+
+let get_piece board (x, y) : Piece.t =
+  if invalid_pos (x, y) then raise InvalidPos
+  else
+    let row = List.nth board x in
+    List.nth row y
 
 let init_board =
   {
@@ -98,7 +102,7 @@ let pp_list pp_elt lst =
   "[" ^ pp_elts lst ^ "]"
 
 let next_moves board piece =
-  let board = board.board in
+  let board = get_board board in
   let possible_moves =
     try valid_moves piece with
     | EmptySquare -> []
@@ -130,11 +134,11 @@ let next_moves board piece =
 
 (* let printer = print_string "Knight move" in printer; possible_moves *)
 
-let move big_board (x1, y1) (x2, y2) =
-  let board = big_board.board in
-  let color = big_board.color in
+let move (x1, y1) (x2, y2) big_board =
+  let board = get_board big_board in
+  let turn = turn big_board in
   let curr_piece = (x1, y1) |> get_piece board in
-  if Piece.color curr_piece <> color then raise InvalidPos
+  if Piece.color curr_piece <> turn then raise InvalidPos
   else
     let curr_legal = next_moves big_board curr_piece in
     if not (List.mem (x2, y2) curr_legal) then raise InvalidPos
@@ -147,17 +151,17 @@ let move big_board (x1, y1) (x2, y2) =
         let new_board =
           replace_row new_piece_moved x1 y1 board |> replace_row curr_piece_moved x2 y2
         in
-        { board = new_board; color = not color }
+        { board = new_board; color = not turn }
       else
         (* Capturing by replacing an occupied square w/ empty piece *)
         let new_board =
           replace_row (init_piece "empty" false x1 y1) x1 y1 board
           |> replace_row curr_piece_moved x2 y2
         in
-        { board = new_board; color = not color }
+        { board = new_board; color = not turn }
 
-let rec to_string (board : t) =
-  match board.board with
+let rec to_string board =
+  match get_board board with
   | [] -> ""
   | h :: t ->
       row_to_string h ^ "\n-----------------\n" ^ to_string { board = t; color = board.color }

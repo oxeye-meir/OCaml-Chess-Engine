@@ -14,7 +14,6 @@ let print_rules () =
     \     “current_position new_position”, i.e. e2 e4”\n\n\
      2. To quit, type 'Quit.'\n\n"
 
-(*print_invalid_move is not used anywhere yet*)
 let print_invalid_move () =
   ANSITerminal.print_string [ ANSITerminal.red ] "Invalid move. Please try again! \n"
 
@@ -53,7 +52,7 @@ let rec get_current_board board reset invalid =
   let next_board =
     if reset_value then initial_state
     else
-      try Chess.Board.move board start_coord end_coord with
+      try Chess.Board.move start_coord end_coord board with
       | InvalidPos -> get_current_board board reset_value true
   in
   get_current_board next_board reset_value false
