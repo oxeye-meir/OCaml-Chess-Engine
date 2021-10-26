@@ -2,6 +2,7 @@ open OUnit2
 open Chess
 open Piece
 open Board
+open Command
 
 (** [cmp_set_like_lists lst1 lst2] compares two lists to see whether they are equivalent
     set-like lists. That means checking two things. First, they must both be {i set-like},
@@ -35,6 +36,15 @@ let rec move_times time (x, y) piece =
   match time with
   | 0 -> piece
   | _ -> move_times (time - 1) (x, y) (move_piece (x, y) piece)
+
+let move_helper str1 str2 =
+  let ch1 = String.get str1 0 in
+  let ch2 = String.get str1 1 in
+  let ch3 = String.get str2 0 in
+  let ch4 = String.get str2 1 in
+  move
+    (7 - (Char.code ch2 - 49), Char.code ch1 - 97)
+    (7 - (Char.code ch4 - 49), Char.code ch3 - 97)
 
 (*Piece function tests*)
 let position_test name expected_output piece =
@@ -74,6 +84,12 @@ let next_moves_test name expected_output board piece =
 
 let invalidpos_test name board curr_pos new_pos =
   name >:: fun _ -> assert_raises InvalidPos (fun () -> move curr_pos new_pos board)
+
+let check_test name board expected_output =
+  name >:: fun _ -> check board |> assert_equal expected_output
+
+let checkmate_test name board expected_output =
+  name >:: fun _ -> checkmate board |> assert_equal expected_output
 
 let initial_board = init_board
 
@@ -213,13 +229,14 @@ let piece_tests =
       initial_bl_queen;
   ]
 
-let sep = "\n-----------------\n"
+let sep = "\n-------------------------\n"
 
-let empty = "| | | | | | | | |"
+let empty = "|  |  |  |  |  |  |  |  |"
 
 let initial_board_string =
-  "|♜|♞|♝|♛|♚|♝|♞|♜|" ^ sep ^ "|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|" ^ sep ^ empty ^ sep ^ empty ^ sep ^ empty
-  ^ sep ^ empty ^ sep ^ "|♙|♙|♙|♙|♙|♙|♙|♙|" ^ sep ^ "|♖|♘|♗|♕|♔|♗|♘|♖|" ^ sep
+  "|♜ |♞ |♝ |♛ |♚ |♝ |♞ |♜ |" ^ sep ^ "|♟︎ |♟︎ |♟︎ |♟︎ |♟︎ |♟︎ |♟︎ |♟︎ |" ^ sep ^ empty ^ sep ^ empty
+  ^ sep ^ empty ^ sep ^ empty ^ sep ^ "|♙ |♙ |♙ |♙ |♙ |♙ |♙ |♙ |" ^ sep
+  ^ "|♖ |♘ |♗ |♕ |♔ |♗ |♘ |♖ |" ^ sep
 
 let fst_board = move (6, 4) (4, 4) initial_board
 
@@ -252,20 +269,38 @@ let promotion_board =
 
 let promotion_queen = init_piece "queen" true 7 0 |> move_times 5 (7, 0)
 
+let scholar_check =
+  initial_board
+  |> move (6, 4) (4, 4)
+  |> move (1, 4) (3, 4)
+  |> move (7, 3) (3, 7)
+  |> move (1, 0) (3, 0)
+  |> move (7, 5) (4, 2)
+  |> move (1, 1) (3, 1)
+  |> move (3, 7) (1, 5)
+
+let double_check =
+  initial_board |> move_helper "c2" "c4" |> move_helper "a7" "a6" |> move_helper "b1" "c3"
+  |> move_helper "d7" "d5" |> move_helper "c3" "b5" |> move_helper "g7" "g5"
+  |> move_helper "d1" "a4" |> move_helper "f7" "f5" |> move_helper "b5" "c7"
+
+let move_into_check =
+  initial_board |> move_helper "c2" "c4" |> move_helper "c7" "c5" |> move_helper "d1" "a4"
+
 let fst_board_string =
-  "|♜|♞|♝|♛|♚|♝|♞|♜|" ^ sep ^ "|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|" ^ sep ^ empty ^ sep ^ empty ^ sep
-  ^ "| | | | |♙| | | |" ^ sep ^ empty ^ sep ^ "|♙|♙|♙|♙| |♙|♙|♙|" ^ sep ^ "|♖|♘|♗|♕|♔|♗|♘|♖|"
-  ^ sep
+  "|♜ |♞ |♝ |♛ |♚ |♝ |♞ |♜ |" ^ sep ^ "|♟︎ |♟︎ |♟︎ |♟︎ |♟︎ |♟︎ |♟︎ |♟︎ |" ^ sep ^ empty ^ sep ^ empty
+  ^ sep ^ "|  |  |  |  |♙ |  |  |  |" ^ sep ^ empty ^ sep ^ "|♙ |♙ |♙ |♙ |  |♙ |♙ |♙ |" ^ sep
+  ^ "|♖ |♘ |♗ |♕ |♔ |♗ |♘ |♖ |" ^ sep
 
 let snd_board_string =
-  "|♜|♞|♝|♛|♚|♝|♞|♜|" ^ sep ^ "| |♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|" ^ sep ^ empty ^ sep ^ "|♟︎| | | | | | | |"
-  ^ sep ^ "| | | | |♙| | | |" ^ sep ^ empty ^ sep ^ "|♙|♙|♙|♙| |♙|♙|♙|" ^ sep
-  ^ "|♖|♘|♗|♕|♔|♗|♘|♖|" ^ sep
+  "|♜ |♞ |♝ |♛ |♚ |♝ |♞ |♜ |" ^ sep ^ "|  |♟︎ |♟︎ |♟︎ |♟︎ |♟︎ |♟︎ |♟︎ |" ^ sep ^ empty ^ sep
+  ^ "|♟︎ |  |  |  |  |  |  |  |" ^ sep ^ "|  |  |  |  |♙ |  |  |  |" ^ sep ^ empty ^ sep
+  ^ "|♙ |♙ |♙ |♙ |  |♙ |♙ |♙ |" ^ sep ^ "|♖ |♘ |♗ |♕ |♔ |♗ |♘ |♖ |" ^ sep
 
 let promotion_board_string =
-  "| |♞|♝|♛|♚|♝|♞|♜|" ^ sep ^ "| |♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|" ^ sep ^ empty ^ sep ^ empty ^ sep
-  ^ "| | | | |♙| | |♙|" ^ sep ^ "| | | | | | | |♖|" ^ sep ^ "| | |♙|♙| |♙|♙| |" ^ sep
-  ^ "|♛|♜|♗|♕|♔|♗|♘| |" ^ sep
+  "|  |♞ |♝ |♛ |♚ |♝ |♞ |♜ |" ^ sep ^ "|  |♟︎ |♟︎ |♟︎ |♟︎ |♟︎ |♟︎ |♟︎ |" ^ sep ^ empty ^ sep ^ empty
+  ^ sep ^ "|  |  |  |  |♙ |  |  |♙ |" ^ sep ^ "|  |  |  |  |  |  |  |♖ |" ^ sep
+  ^ "|  |  |♙ |♙ |  |♙ |♙ |  |" ^ sep ^ "|♛ |♜ |♗ |♕ |♔ |♗ |♘ |  |" ^ sep
 
 let board_tests =
   [
@@ -301,6 +336,13 @@ let board_tests =
       snd_board_string snd_board;
     to_string_test "promotion board's configuration after capturing and promotion"
       promotion_board_string promotion_board;
+    check_test "Initial board should not be in a check state" initial_board false;
+    checkmate_test "Initial board should not be in a checkmate state" initial_board false;
+    check_test "Scholar's checkmate should be in a check state" scholar_check true;
+    checkmate_test "Scholar's checkmate should be in a checkmate state" scholar_check true;
+    check_test "Double check should be in a check state" double_check true;
+    checkmate_test "Double check is not a checkmate state" double_check false;
+    invalidpos_test "Cannot move into a check" move_into_check (1, 3) (3, 3);
   ]
 
 (*Command Module Tests Here*)

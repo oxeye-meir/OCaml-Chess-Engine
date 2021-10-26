@@ -20,6 +20,14 @@ let print_invalid_move () =
 let print_reset () =
   ANSITerminal.print_string [ ANSITerminal.cyan ] "You have restarted your game! \n"
 
+let print_check () = ANSITerminal.print_string [ ANSITerminal.yellow ] "Check! \n"
+
+let print_check_mate turn () =
+  let print_cyan = ANSITerminal.print_string [ ANSITerminal.cyan ] in
+  if turn then print_cyan "Checkmate! White wins! \n"
+  else print_cyan "Checkmate! Black wins! \n";
+  exit 0
+
 let print_board board = board |> to_string |> print_string
 
 let get_command (input : string) : position * position =
@@ -41,6 +49,8 @@ let rec get_current_board board reset invalid =
   print_board board;
   if invalid then print_invalid_move () else if reset then print_reset ();
   let turn_color = turn board in
+  if checkmate board then print_check_mate turn_color ();
+  if check board then print_check ();
   if turn_color then print_string "Black move> " else print_string "White move> ";
   let input = read_line () in
   let command = get_command input in

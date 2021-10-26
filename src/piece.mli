@@ -19,8 +19,9 @@ val position : t -> int * int
 val name : t -> string
 (** [name t] is the unicode character that represents piece [t].*)
 
-val color: t -> bool
+val color : t -> bool
 (** [color t] is the color of the piece [t].*)
+
 val moves : t -> int
 (** [moves t] is the move counter of the piece [t].*)
 
