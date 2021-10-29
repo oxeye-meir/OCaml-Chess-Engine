@@ -38,11 +38,11 @@ let rec move_times time (x, y) piece =
   | 0 -> piece
   | _ -> move_times (time - 1) (x, y) (move_piece (x, y) piece)
 
-let move_helper str1 str2 =
+let move_helper str1 str2 turn =
   let ch1 = String.get str1 0 in
   let ch2 = String.get str1 1 in
   let ch3 = String.get str2 0 in
   let ch4 = String.get str2 1 in
   move
     (7 - (Char.code ch2 - 49), Char.code ch1 - 97)
-    (7 - (Char.code ch4 - 49), Char.code ch3 - 97)
+    (7 - (Char.code ch4 - 49), Char.code ch3 - 97) turn

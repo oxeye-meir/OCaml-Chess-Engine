@@ -1,6 +1,7 @@
 open Chess
 open Piece
 open Board
+open State
 
 type position = int * int
 
@@ -28,7 +29,7 @@ let print_check_mate turn () =
   else print_cyan "Checkmate! Black wins! \n";
   exit 0
 
-let print_board board = board |> to_string |> print_string
+let print_board state = state |> State.board |> to_string |> print_string
 
 let get_command (input : string) : position * position =
   let command =
@@ -42,14 +43,15 @@ let get_command (input : string) : position * position =
       print_quit ();
       exit 0
 
-let initial_state = Chess.Board.init_board
+let initial_state = Chess.State.init_state
 (* let position_printer (x, y) = "(" ^ string_of_int x ^ ", " ^ string_of_int y ^ ")" *)
 
-let rec get_current_board board reset invalid =
-  print_board board;
+let rec get_current_board state reset invalid =
+  print_board state;
   if invalid then print_invalid_move () else if reset then print_reset ();
-  let turn_color = turn board in
-  if checkmate board then print_check_mate turn_color ();
+  let turn_color = turn state in
+  let board = State.board state in
+  if checkmate board turn_color then print_check_mate turn_color ();
   if check board then print_check ();
   if turn_color then print_string "Black move> " else print_string "White move> ";
   let input = read_line () in
@@ -59,13 +61,13 @@ let rec get_current_board board reset invalid =
   let end_coord = snd command in
   (* position_printer start_coord |> print_string; *)
   let reset_value = fst start_coord = -99 in
-  let next_board =
+  let next_state =
     if reset_value then initial_state
     else
-      try Chess.Board.move start_coord end_coord board with
-      | InvalidPos -> get_current_board board reset_value true
+      try State.change_state start_coord end_coord state with
+      | InvalidPos -> get_current_board state reset_value true
   in
-  get_current_board next_board reset_value false
+  get_current_board next_state reset_value false
 
 (** [main ()] prompts for the game to play, then starts it. *)
 let main () =

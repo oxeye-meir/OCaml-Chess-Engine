@@ -1,11 +1,6 @@
 open Piece
 
-type board = Piece.t list list
-
-type t = {
-  board : board;
-  color : bool;
-}
+type t = Piece.t list list
 
 exception InvalidPos
 
@@ -23,7 +18,7 @@ let rec replace_row piece x y = function
   | h :: t ->
       if x = 0 then replace_piece piece y h :: t else h :: replace_row piece (x - 1) y t
 
-let row_to_string row = List.fold_left (fun acc piece -> acc ^ name piece ^ " |") "|" row
+let row_to_string row num = List.fold_left (fun acc piece -> acc ^ name piece ^ " |") (string_of_int num ^ " |") row
 
 let rec empty_squares color x y lst =
   if y >= 0 then empty_squares (not color) x (y - 1) (init_piece "empty" color x y :: lst)
@@ -44,36 +39,27 @@ let backrank color x =
     init_piece "rook" color x 7;
   ]
 
-let turn board = board.color
-
-let get_board board = board.board
-
-let get_piece board (x, y) : Piece.t =
+let get_piece board (x, y) =
   if invalid_pos (x, y) then raise InvalidPos
   else
     let row = List.nth board x in
     List.nth row y
 
 let init_board =
-  {
-    board =
-      [
-        backrank true 0;
-        pawns true 1 7 [];
-        empty_squares false 2 7 [];
-        empty_squares true 3 7 [];
-        empty_squares false 4 7 [];
-        empty_squares true 5 7 [];
-        pawns false 6 7 [];
-        backrank false 7;
-      ];
-    color = false;
-  }
+  [
+    backrank true 0;
+    pawns true 1 7 [];
+    empty_squares false 2 7 [];
+    empty_squares true 3 7 [];
+    empty_squares false 4 7 [];
+    empty_squares true 5 7 [];
+    pawns false 6 7 [];
+    backrank false 7;
+  ]
 
 let get_pieces_with_condition board condition =
-  let board_state = get_board board in
-  let flattened_pieces = List.flatten board_state in
-  List.filter condition flattened_pieces
+  let pieces = List.flatten board in
+  List.filter condition pieces
 
 let rec find_kings result = function
   | [] -> raise InvalidPos
@@ -115,16 +101,8 @@ let pp_list pp_elt lst =
   in
   "[" ^ pp_elts lst ^ "]"
 
-let next_moves board piece =
-  let board = get_board board in
-  let possible_moves =
-    try valid_moves piece with
-    | EmptySquare -> []
-  in
-  let not_jumpable_pieces =
-    Piece.name piece <> "♞" && Piece.name piece <> "♘" && not (is_king piece)
-  in
-  if not_jumpable_pieces then
+let move_filter board piece =
+  if Piece.name piece <> "♞" && Piece.name piece <> "♘" && not (is_king piece) then
     let position = Piece.position piece in
     let color = Piece.color piece in
     let total_lst =
@@ -137,11 +115,16 @@ let next_moves board piece =
       |> valid_check board color position (fun (x, y) -> (x + 1, y - 1))
       |> valid_check board color position (fun (x, y) -> (x + 1, y + 1))
     in
-    List.filter (fun x -> List.mem x total_lst) possible_moves
+    List.filter (fun x -> List.mem x total_lst)
   else
-    List.filter
-      (fun x -> empty_position board x || enemy_position board (Piece.color piece) x)
-      possible_moves
+    List.filter (fun x -> empty_position board x || enemy_position board (Piece.color piece) x)
+
+let next_moves board piece =
+  let possible_moves =
+    try valid_moves piece with
+    | EmptySquare -> []
+  in
+  move_filter board piece possible_moves
 
 let rec enemy_king_check board curr_color = function
   | [] -> false
@@ -155,69 +138,49 @@ let rec enemy_king_check board curr_color = function
 let rec enemy_under_check board = function
   | [] -> false
   | h :: t ->
-      let board_state = get_board board in
       let piece_possible_moves = next_moves board h in
       let piece_color = color h in
-      if enemy_king_check board_state piece_color piece_possible_moves then true
+      if enemy_king_check board piece_color piece_possible_moves then true
       else enemy_under_check board t
 
-let check board =
-  let board_state = get_board board |> List.flatten in
-  board_state |> enemy_under_check board
+let check board = board |> List.flatten |> enemy_under_check board
 
-let move (x1, y1) (x2, y2) big_board =
-  let board = get_board big_board in
-  let turn = turn big_board in
+let move (x1, y1) (x2, y2) turn board =
   let curr_piece = (x1, y1) |> get_piece board in
   if Piece.color curr_piece <> turn then raise InvalidPos
+  else if next_moves board curr_piece |> List.mem (x2, y2) |> not then raise InvalidPos
   else
-    let curr_legal = next_moves big_board curr_piece in
-    if not (List.mem (x2, y2) curr_legal) then raise InvalidPos
-    else
-      let new_piece = get_piece board (x2, y2) in
-      let curr_piece_moved = move_piece (x2, y2) curr_piece in
+    let new_piece = get_piece board (x2, y2) in
+    let curr_piece_moved = move_piece (x2, y2) curr_piece in
+    let new_board =
       if is_empty new_piece then
-        (* Moving to an empty square by swapping positions*)
         let new_piece_moved = move_piece (x1, y1) new_piece in
-        let new_board =
-          replace_row new_piece_moved x1 y1 board |> replace_row curr_piece_moved x2 y2
-        in
-        let moved_board = { board = new_board; color = not turn } in
-        let next_color_pieces =
-          get_pieces_with_condition moved_board (fun p -> color p = not turn)
-        in
-        if enemy_under_check moved_board next_color_pieces then raise InvalidPos
-        else moved_board
+        replace_row new_piece_moved x1 y1 board |> replace_row curr_piece_moved x2 y2
       else
-        (* Capturing by replacing an occupied square w/ empty piece *)
-        let new_board =
-          replace_row (init_piece "empty" false x1 y1) x1 y1 board
-          |> replace_row curr_piece_moved x2 y2
-        in
-        let moved_board = { board = new_board; color = not turn } in
-        let next_color_pieces =
-          get_pieces_with_condition moved_board (fun p -> color p = not turn)
-        in
-        if enemy_under_check moved_board next_color_pieces then raise InvalidPos
-        else moved_board
+        replace_row (init_piece "empty" false x1 y1) x1 y1 board
+        |> replace_row curr_piece_moved x2 y2
+    in
+    let next_color_pieces =
+      get_pieces_with_condition new_board (fun p -> color p = not turn)
+    in
+    if enemy_under_check new_board next_color_pieces then raise InvalidPos else new_board
 
-let rec next_king_moves board king_curr_pos = function
+let rec next_king_moves (board : t) turn king_curr_pos = function
   | [] -> false
   | pos :: t ->
       let try_current_move =
-        try move king_curr_pos pos board with
+        try move king_curr_pos pos turn board with
         | InvalidPos -> board
       in
       if check try_current_move || try_current_move = board then
         if check try_current_move && t = [] then true
-        else next_king_moves board king_curr_pos t
+        else next_king_moves board turn king_curr_pos t
       else false
 
-let checkmate board =
+let checkmate board turn =
   if board = init_board then false
   else
-    let board_state = get_board board in
-    let flattened_pieces = board_state |> List.flatten in
+    let flattened_pieces = board |> List.flatten in
     let kings_list = find_kings [] flattened_pieces in
     let king_1 = List.nth kings_list 0 in
     let king_2 = List.nth kings_list 1 in
@@ -225,16 +188,16 @@ let checkmate board =
     let king_2_pos = position king_2 in
     let king_1_next_moves = next_moves board king_1 in
     let king_2_next_moves = next_moves board king_2 in
-    try next_king_moves board king_1_pos king_1_next_moves with
+    try next_king_moves board turn king_1_pos king_1_next_moves with
     | InvalidPos -> (
         false
         ||
-        try next_king_moves board king_2_pos king_2_next_moves with
+        try next_king_moves board turn king_2_pos king_2_next_moves with
         | InvalidPos -> false)
-
-let rec to_string (board : t) =
-  match board.board with
+let sep = "\n  -------------------------\n"
+let rec to_string_helper board num =
+  match board with
   | [] -> ""
-  | h :: t ->
-      row_to_string h ^ "\n-------------------------\n"
-      ^ to_string { board = t; color = board.color }
+  | h :: t -> row_to_string h num ^ sep ^ to_string_helper t (num-1)
+
+let rec to_string (board : t) = "   A  B  C  D  E  F  G  H " ^ sep ^ to_string_helper board 8

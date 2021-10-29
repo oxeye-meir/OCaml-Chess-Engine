@@ -76,7 +76,7 @@ let valid_pawn_moves (pawn : piece_info) : (int * int) list =
   match pawn.color with
   | true -> if pawn.moves = 0 then (pawn.x + 2, pawn.y) :: black_moves else black_moves
   | false -> if pawn.moves = 0 then (pawn.x - 2, pawn.y) :: white_moves else white_moves
-
+(* asdasd *)
 let rec rook_updown row y current_list =
   if row <= 7 then rook_updown (row + 1) y ((row, y) :: current_list) else current_list
 
