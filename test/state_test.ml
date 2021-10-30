@@ -22,7 +22,7 @@ let turn_tests =
 let result_tests =
   [
     result_test "result of initial state is Playing" Playing initial_state;
-    (* result_test "result of scholar's checkmate is WhiteWin" WhiteWin scholar_state; *)
+    result_test "result of scholar's checkmate is WhiteWin" WhiteWin scholar_state;
   ]
 
 let checkmate_tests =

@@ -32,9 +32,12 @@ let print_reset () =
 
 let print_check () = ANSITerminal.print_string [ ANSITerminal.yellow ] "Check! \n"
 
-let print_check_mate turn () =
+let print_check_mate result () =
   ANSITerminal.print_string [ ANSITerminal.cyan ]
-    (if turn then "Checkmate! White wins! \n" else "Checkmate! Black wins! \n");
+    (match result with
+    | WhiteWin -> "Checkmate! White wins! \n"
+    | BlackWin -> "Checkmate! Black wins! \n"
+    | _ -> raise (Failure "Invalid Checkmate"));
   exit 0
 
 let print_board state = state |> State.board |> to_string |> print_string
@@ -61,11 +64,10 @@ let rec get_current_board state reset error =
   print_board state;
   print_error error;
   if reset then print_reset ();
-  let turn_color = turn state in
   let board = State.board state in
-  if State.checkmate state then print_check_mate turn_color ();
+  if State.checkmate state then print_check_mate (result state) ();
   if check board then print_check ();
-  print_string (if turn_color then "Black move> " else "White move> ");
+  print_string (if turn state then "Black move> " else "White move> ");
   let command = read_line () |> get_command in
   let start_coord = fst command in
   let reset_value = fst start_coord = -99 in

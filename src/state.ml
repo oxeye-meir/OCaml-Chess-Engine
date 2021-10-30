@@ -56,14 +56,14 @@ let checkmate state =
     try_all_moves board same_pieces
 
 let change_state pos1 pos2 state =
-  if checkmate state then
-    if turn state then { state with result = WhiteWin } else { state with result = BlackWin }
+  let curr_board = board state in
+  let curr_piece = get_piece curr_board pos1 in
+  if turn state <> color curr_piece then raise WrongColor
   else
-    let curr_board = board state in
-    let curr_piece = get_piece curr_board pos1 in
-    if turn state <> color curr_piece then raise WrongColor
-    else
-      let new_board = Board.move pos1 pos2 curr_board in
-      { state with board = new_board; turn = not state.turn }
+    let new_board = Board.move pos1 pos2 curr_board in
+    let new_state = { state with board = new_board; turn = not state.turn } in
+    if checkmate new_state then
+      { new_state with result = (if turn state then BlackWin else WhiteWin) }
+    else new_state
 
 (* Other functionalitiess TBD *)

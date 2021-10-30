@@ -139,11 +139,9 @@ let scholar_state =
   |> change_state (3, 7) (1, 5)
 
 let double_state =
-  initial_state |> Helper.state_helper "c2" "c4" |> Helper.state_helper "a7" "a6"
-  |> Helper.state_helper "b1" "c3" |> Helper.state_helper "d7" "d5"
-  |> Helper.state_helper "c3" "b5" |> Helper.state_helper "g7" "g5"
-  |> Helper.state_helper "d1" "a4" |> Helper.state_helper "f7" "f5"
-  |> Helper.state_helper "b5" "c7"
+  initial_state |> state_helper "c2" "c4" |> state_helper "a7" "a6" |> state_helper "b1" "c3"
+  |> state_helper "d7" "d5" |> state_helper "c3" "b5" |> state_helper "g7" "g5"
+  |> state_helper "d1" "a4" |> state_helper "f7" "f5" |> state_helper "b5" "c7"
 
 (* Other Values *)
 let empty_space = "         "
