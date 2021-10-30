@@ -64,6 +64,14 @@ let position piece = pattern_helper (fun piece_info -> (piece_info.x, piece_info
 
 let name piece = pattern_helper (fun piece_info -> piece_info.name) piece
 
+let is_king = function
+  | King _ -> true
+  | _ -> false
+
+let is_pawn = function
+  | Pawn _ -> true
+  | _ -> false
+
 let color piece = pattern_helper (fun piece_info -> piece_info.color) piece
 
 let moves piece = pattern_helper (fun piece_info -> piece_info.moves) piece
@@ -71,12 +79,20 @@ let moves piece = pattern_helper (fun piece_info -> piece_info.moves) piece
 let valid_pos (x, y) = x <= 7 && x >= 0 && y >= 0 && y <= 7
 
 let valid_pawn_moves (pawn : piece_info) : (int * int) list =
-  let black_moves = [ (pawn.x + 1, pawn.y) ] in
-  let white_moves = [ (pawn.x - 1, pawn.y) ] in
+  let black_moves =
+    List.filter
+      (fun pos -> valid_pos pos)
+      [ (pawn.x + 1, pawn.y); (pawn.x + 1, pawn.y + 1); (pawn.x + 1, pawn.y - 1) ]
+  in
+  let white_moves =
+    List.filter
+      (fun pos -> valid_pos pos)
+      [ (pawn.x - 1, pawn.y); (pawn.x - 1, pawn.y + 1); (pawn.x - 1, pawn.y - 1) ]
+  in
   match pawn.color with
   | true -> if pawn.moves = 0 then (pawn.x + 2, pawn.y) :: black_moves else black_moves
   | false -> if pawn.moves = 0 then (pawn.x - 2, pawn.y) :: white_moves else white_moves
-(* asdasd *)
+
 let rec rook_updown row y current_list =
   if row <= 7 then rook_updown (row + 1) y ((row, y) :: current_list) else current_list
 

@@ -9,6 +9,12 @@ let position_test name expected_output piece =
 let name_test test_name expected_output piece =
   test_name >:: fun _ -> assert_equal expected_output (name piece) ~printer:id
 
+let is_king_test name expected_output piece =
+  name >:: fun _ -> assert_equal expected_output (is_king piece) ~printer:string_of_bool
+
+let is_pawn_test name expected_output piece =
+  name >:: fun _ -> assert_equal expected_output (is_pawn piece) ~printer:string_of_bool
+
 let moves_test name expected_output piece =
   name >:: fun _ -> assert_equal expected_output (moves piece) ~printer:string_of_int
 
@@ -37,6 +43,18 @@ let name_tests =
     name_test "name of empty square is [ ]" " " empty_sq;
   ]
 
+let is_pawn_tests =
+  [
+    is_pawn_test "A black pawn is a pawn" true bl_pawn;
+    is_pawn_test "A white rook is not a pawn" false wh_rook;
+  ]
+
+let is_king_tests =
+  [
+    is_king_test "A king is true" true bl_king;
+    is_king_test "A pawn should return not false" false bl_pawn;
+  ]
+
 let moves_tests =
   [
     moves_test "moves of an initial black pawn is 0" 0 bl_pawn;
@@ -58,8 +76,10 @@ let is_empty_tests =
 
 let valid_moves_tests =
   [
-    valid_moves_test "valid move of black pawn is [(2,0); (3,0)]" [ (2, 0); (3, 0) ] bl_pawn;
-    valid_moves_test "valid move of white pawn is [(5, 0); (4,0)] " [ (5, 0); (4, 0) ] wh_pawn;
+    valid_moves_test "valid move of black pawn is [(2,0); (3,0);(2,1)]"
+      [ (2, 0); (3, 0); (2, 1) ] bl_pawn;
+    valid_moves_test "valid move of white pawn is [(5, 0); (4,0); (5,1)] "
+      [ (5, 0); (4, 0); (5, 1) ] wh_pawn;
     valid_moves_test "valid move of king is [(1,3);(1,4);(1,5);(2,3);(2,5);(3,3);(3,4);(3,5)]"
       [ (1, 3); (1, 4); (1, 5); (2, 3); (2, 5); (3, 3); (3, 4); (3, 5) ]
       bl_king;
@@ -154,6 +174,8 @@ let suite =
   "test suite for Piece"
   >::: List.flatten
          [
+           is_king_tests;
+           is_pawn_tests;
            position_tests;
            name_tests;
            moves_tests;

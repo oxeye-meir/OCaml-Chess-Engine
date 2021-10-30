@@ -1,5 +1,6 @@
 open Chess.Board
 open Chess.Piece
+open Chess.State
 
 (* Comparators *)
 
@@ -32,17 +33,23 @@ let pp_list pp_elt lst =
   in
   "[" ^ pp_elts lst ^ "]"
 
+let result_printer = function
+  | Playing -> "Playing"
+  | WhiteWin -> "WhiteWin"
+  | BlackWin -> "BlackWin"
+  | Stalemate -> "Stalemate"
+
 (* Board Moves *)
 let rec move_times time (x, y) piece =
   match time with
   | 0 -> piece
   | _ -> move_times (time - 1) (x, y) (move_piece (x, y) piece)
 
-let move_helper str1 str2 turn =
+let pos str1 =
   let ch1 = String.get str1 0 in
   let ch2 = String.get str1 1 in
-  let ch3 = String.get str2 0 in
-  let ch4 = String.get str2 1 in
-  move
-    (7 - (Char.code ch2 - 49), Char.code ch1 - 97)
-    (7 - (Char.code ch4 - 49), Char.code ch3 - 97) turn
+  (7 - (Char.code ch2 - 49), Char.code ch1 - 97)
+
+let move_helper str1 str2 = move (pos str1) (pos str2)
+
+let state_helper str1 str2 = change_state (pos str1) (pos str2)

@@ -5,6 +5,11 @@ open State
 
 type position = int * int
 
+type error =
+  | None
+  | InvalidPos
+  | WrongColor
+
 let print_quit () = ANSITerminal.print_string [ ANSITerminal.yellow ] "QUITTING .... \n"
 
 let print_rules () =
@@ -18,15 +23,18 @@ let print_rules () =
 let print_invalid_move () =
   ANSITerminal.print_string [ ANSITerminal.red ] "Invalid move. Please try again! \n"
 
+let print_wrong_color () =
+  ANSITerminal.print_string [ ANSITerminal.red ]
+    "That piece is not your color. Please try again! \n"
+
 let print_reset () =
   ANSITerminal.print_string [ ANSITerminal.cyan ] "You have restarted your game! \n"
 
 let print_check () = ANSITerminal.print_string [ ANSITerminal.yellow ] "Check! \n"
 
 let print_check_mate turn () =
-  let print_cyan = ANSITerminal.print_string [ ANSITerminal.cyan ] in
-  if turn then print_cyan "Checkmate! White wins! \n"
-  else print_cyan "Checkmate! Black wins! \n";
+  ANSITerminal.print_string [ ANSITerminal.cyan ]
+    (if turn then "Checkmate! White wins! \n" else "Checkmate! Black wins! \n");
   exit 0
 
 let print_board state = state |> State.board |> to_string |> print_string
@@ -44,37 +52,38 @@ let get_command (input : string) : position * position =
       exit 0
 
 let initial_state = Chess.State.init_state
-(* let position_printer (x, y) = "(" ^ string_of_int x ^ ", " ^ string_of_int y ^ ")" *)
 
-let rec get_current_board state reset invalid =
+let print_error error =
+  if error = InvalidPos then print_invalid_move ()
+  else if error = WrongColor then print_wrong_color ()
+
+let rec get_current_board state reset error =
   print_board state;
-  if invalid then print_invalid_move () else if reset then print_reset ();
+  print_error error;
+  if reset then print_reset ();
   let turn_color = turn state in
   let board = State.board state in
-  if checkmate board turn_color then print_check_mate turn_color ();
+  if State.checkmate state then print_check_mate turn_color ();
   if check board then print_check ();
-  if turn_color then print_string "Black move> " else print_string "White move> ";
-  let input = read_line () in
-  let command = get_command input in
+  print_string (if turn_color then "Black move> " else "White move> ");
+  let command = read_line () |> get_command in
   let start_coord = fst command in
-  (* position_printer start_coord |> print_string; *)
-  let end_coord = snd command in
-  (* position_printer start_coord |> print_string; *)
   let reset_value = fst start_coord = -99 in
   let next_state =
     if reset_value then initial_state
     else
-      try State.change_state start_coord end_coord state with
-      | InvalidPos -> get_current_board state reset_value true
+      try State.change_state start_coord (snd command) state with
+      | InvalidPos -> get_current_board state reset_value InvalidPos
+      | WrongColor -> get_current_board state reset_value WrongColor
   in
-  get_current_board next_state reset_value false
+  get_current_board next_state reset_value None
 
 (** [main ()] prompts for the game to play, then starts it. *)
 let main () =
   let start =
     ANSITerminal.print_string [ ANSITerminal.blue ] "\n\nWelcome to the Chess Game engine.\n";
     print_rules ();
-    let board_operate = get_current_board initial_state false false |> print_board in
+    let board_operate = get_current_board initial_state false None |> print_board in
     board_operate
   in
   start

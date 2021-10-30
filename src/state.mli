@@ -1,5 +1,12 @@
-type result
 (** The type representing the result of a chess game. *)
+type result =
+  | Playing
+  | WhiteWin
+  | BlackWin
+  | Stalemate
+
+exception WrongColor
+(** The exception to be raised when a player tries moving the wrong color pieces. *)
 
 type t
 (** The abstract type representing a state of the game. *)
@@ -15,6 +22,11 @@ val board : t -> Board.t
 
 val result : t -> result
 (** [result s] is the result of the state [s]. *)
+
+val checkmate : t -> bool
+(** [checkmate s turn] is whether or not the current state [s] is in a 'checkmate' state. A
+    'checkmate' state happens when either side's [King] piece is being threatened by the
+    opposing side's piece(s) and cannot move anywhere. *)
 
 val change_state : int * int -> int * int -> t -> t
 (** [change_state curr_pos new_pos state] is the new state after moving the board of current
