@@ -2,6 +2,7 @@ open Chess
 open Piece
 open Board
 open State
+open Command
 
 type position = int * int
 
@@ -42,17 +43,10 @@ let print_check_mate result () =
 
 let print_board state = state |> State.board |> to_string |> print_string
 
-let get_command (input : string) : position * position =
-  let command =
-    try Chess.Command.parse input with
-    | Chess.Command.Malformed -> Move ((-1, -1), (-1, -1))
-  in
-  match command with
-  | Move (loc, dst) -> (loc, dst)
-  | Reset -> ((-99, -99), (-99, -99))
-  | Quit ->
-      print_quit ();
-      exit 0
+(* let get_command (input : string) : position * position = let command = try
+   Chess.Command.parse input with | Chess.Command.Malformed -> Move ((-1, -1), (-1, -1)) in
+   match command with | Move (loc, dst) -> (loc, dst) | Reset -> ((-99, -99), (-99, -99)) |
+   Undo -> ((-50, -50), (-50, -50)) | Quit -> print_quit (); exit 0 *)
 
 let initial_state = Chess.State.init_state
 
@@ -60,32 +54,54 @@ let print_error error =
   if error = InvalidPos then print_invalid_move ()
   else if error = WrongColor then print_wrong_color ()
 
-let rec get_current_board state reset error =
+let undo_command state =
+  try State.undo state with
+  | NoUndo ->
+      ANSITerminal.print_string [ ANSITerminal.red ] "There are no more turns to undo! \n";
+      state
+
+let rec get_current_board state error =
   print_board state;
   print_error error;
-  if reset then print_reset ();
   let board = State.board state in
   if State.checkmate state then print_check_mate (result state) ();
   if check board then print_check ();
   print_string (if turn state then "Black move> " else "White move> ");
-  let command = read_line () |> get_command in
-  let start_coord = fst command in
-  let reset_value = fst start_coord = -99 in
-  let next_state =
-    if reset_value then initial_state
-    else
-      try State.change_state start_coord (snd command) state with
-      | InvalidPos -> get_current_board state reset_value InvalidPos
-      | WrongColor -> get_current_board state reset_value WrongColor
+  let input = read_line () in
+  let command =
+    try parse input with
+    | Malformed -> Move ((-1, -1), (-1, -1))
   in
-  get_current_board next_state reset_value None
+  let next_state =
+    match command with
+    | Quit ->
+        print_quit ();
+        exit 0
+    | Reset ->
+        print_reset ();
+        initial_state
+    | Undo -> undo_command state
+    | Move (start_coord, end_coord) -> (
+        try change_state start_coord end_coord state with
+        | InvalidPos -> get_current_board state InvalidPos
+        | WrongColor -> get_current_board state WrongColor)
+  in
+  get_current_board next_state None
+
+(* let command = read_line () |> get_command in let start_coord = fst command in let undo = fst
+   start_coord = -50 in let reset_value = fst start_coord = -99 in let next_state = if undo
+   then ( try State.undo state with | NoUndo -> ANSITerminal.print_string [ ANSITerminal.red ]
+   "There are no more turns to undo! \n"; state) else if reset_value then initial_state else
+   try State.change_state start_coord (snd command) state with | InvalidPos ->
+   get_current_board state reset_value InvalidPos | WrongColor -> get_current_board state
+   reset_value WrongColor in get_current_board next_state reset_value None *)
 
 (** [main ()] prompts for the game to play, then starts it. *)
 let main () =
   let start =
     ANSITerminal.print_string [ ANSITerminal.blue ] "\n\nWelcome to the Chess Game engine.\n";
     print_rules ();
-    let board_operate = get_current_board initial_state false None |> print_board in
+    let board_operate = get_current_board initial_state None |> print_board in
     board_operate
   in
   start

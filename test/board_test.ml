@@ -6,13 +6,21 @@ open Values
 let get_piece_test name expected_output board pos =
   name >:: fun _ -> assert_equal expected_output (get_piece board pos)
 
+let get_white_pieces_test name expected_output board =
+  name >:: fun _ ->
+  assert_equal ~cmp:cmp_set_like_lists expected_output (get_white_pieces board)
+
+let get_black_pieces_test name expected_output board =
+  name >:: fun _ ->
+  assert_equal ~cmp:cmp_set_like_lists expected_output (get_black_pieces board)
+
 let next_moves_test name expected_output board piece =
   name >:: fun _ ->
   assert_equal ~cmp:cmp_set_like_lists expected_output (next_moves board piece)
     ~printer:(pp_list position_printer)
 
 let invalidpos_test name board curr_pos new_pos =
-  name >:: fun _ -> assert_raises InvalidPos (fun () -> move curr_pos new_pos board)
+  name >:: fun _ -> assert_raises InvalidPos (fun () -> move curr_pos new_pos None board)
 
 let check_test name board expected_output =
   name >:: fun _ -> check board |> assert_equal expected_output
@@ -42,8 +50,15 @@ let next_moves_tests =
       initial_board wh_pawn;
     next_moves_test "white rook's next moves after moving a pawn is [(6,0); (5,0)]"
       [ (6, 0); (5, 0) ]
-      (move (6, 0) (4, 0) initial_board)
+      (move (6, 0) (4, 0) None initial_board)
       wh_rook;
+  ]
+
+let get_color_pieces_tests =
+  [
+    get_white_pieces_test "white pieces of initial board" initial_white_pieces initial_board;
+    get_black_pieces_test "all black pieces of initial board" initial_black_pieces
+      initial_board;
   ]
 
 let invalidpos_tests =
@@ -57,6 +72,7 @@ let check_tests =
     check_test "Initial board should not be in a check state" initial_board false;
     check_test "Scholar's checkmate should be in a check state" scholar_check true;
     check_test "Double check should be in a check state" double_check true;
+    check_test "en passant into check should be in a check state" en_passant_check true;
   ]
 
 let to_string_tests =
@@ -75,6 +91,7 @@ let suite =
   >::: List.flatten
          [
            get_piece_tests;
+           get_color_pieces_tests;
            next_moves_tests;
            invalidpos_tests;
            check_tests;

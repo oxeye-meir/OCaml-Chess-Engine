@@ -7,7 +7,7 @@ open Helper
    king ♚ black queen ♛ black rook ♜ black bishop ♝ black knight ♞ black pawn ♟︎ *)
 
 (* [[(0,0); (0,1);(0,2);(0,3);(0,4);(0,5);(0,6);(0,7)];
-   [(0,0);(1,1);(1,2);(1,3);(1,4);(1,5);(1,6);(1,7)];
+   [(1,0);(1,1);(1,2);(1,3);(1,4);(1,5);(1,6);(1,7)];
    [(2,0);(2,1);(2,2);(2,3);(2,4);(2,5);(2,6);(2,7)];
    [(3,0);(3,1);(3,2);(3,3);(3,4);(3,5);(3,6);(3,7)];
    [(4,0);(4,1);(4,2);(4,3);(4,4);(4,5);(4,6);(4,7)];
@@ -49,6 +49,10 @@ let moved_pawn = move_piece (3, 0) bl_pawn
 
 let moved_5_times = move_times 5 (3, 0) bl_pawn
 
+let initial_black_pieces = backrank true 0 @ pawns true 1 7 []
+
+let initial_white_pieces = backrank false 7 @ pawns false 6 7 []
+
 (* Board Strings *)
 let sep = "\n  -------------------------\n"
 
@@ -77,50 +81,6 @@ let promotion_board_string =
   ^ "3 |  |  |  |  |  |  |  |♖ |" ^ sep ^ "2 |  |  |♙ |♙ |  |♙ |♙ |  |" ^ sep
   ^ "1 |♛ |♜ |♗ |♕ |♔ |♗ |♘ |  |" ^ sep
 
-(* Boards/Board Setups *)
-
-let fst_board = move (6, 4) (4, 4) initial_board
-
-let snd_board = move (1, 0) (3, 0) fst_board
-
-let promotion_board =
-  let move_back_forth prev_move back board =
-    prev_move board |> if back then move (5, 7) (7, 7) else move (7, 7) (5, 7)
-  in
-  snd_board
-  |> move (6, 7) (4, 7)
-  |> move_back_forth (move (0, 0) (2, 0)) false
-  |> move_back_forth (move (2, 0) (2, 1)) true
-  |> move_back_forth (move (2, 1) (6, 1)) false
-  |> move_back_forth (move (6, 1) (6, 0)) true
-  |> move_back_forth (move (6, 0) (7, 0)) false
-  |> move_back_forth (move (7, 0) (7, 1)) true
-  |> move_back_forth (move (3, 0) (4, 0)) false
-  |> move_back_forth (move (4, 0) (5, 0)) true
-  |> move_back_forth (move (5, 0) (6, 0)) false
-  |> move (6, 0) (7, 0)
-
-let scholar_check =
-  initial_board
-  |> move (6, 4) (4, 4)
-  |> move (1, 4) (3, 4)
-  |> move (7, 3) (3, 7)
-  |> move (1, 0) (3, 0)
-  |> move (7, 5) (4, 2)
-  |> move (1, 1) (3, 1)
-  |> move (3, 7) (1, 5)
-
-let double_check =
-  initial_board |> Helper.move_helper "c2" "c4" |> Helper.move_helper "a7" "a6"
-  |> Helper.move_helper "b1" "c3" |> Helper.move_helper "d7" "d5"
-  |> Helper.move_helper "c3" "b5" |> Helper.move_helper "g7" "g5"
-  |> Helper.move_helper "d1" "a4" |> Helper.move_helper "f7" "f5"
-  |> Helper.move_helper "b5" "c7"
-
-let move_into_check =
-  initial_board |> Helper.move_helper "c2" "c4" |> Helper.move_helper "c7" "c5"
-  |> Helper.move_helper "d1" "a4"
-
 (* State values*)
 let initial_state = init_state
 
@@ -142,6 +102,58 @@ let double_state =
   initial_state |> state_helper "c2" "c4" |> state_helper "a7" "a6" |> state_helper "b1" "c3"
   |> state_helper "d7" "d5" |> state_helper "c3" "b5" |> state_helper "g7" "g5"
   |> state_helper "d1" "a4" |> state_helper "f7" "f5" |> state_helper "b5" "c7"
+
+let bl_checkmate =
+  initial_state |> state_helper "f2" "f3" |> state_helper "e7" "e5" |> state_helper "g2" "g4"
+  |> state_helper "d8" "h4"
+
+let one_en_passant_state =
+  initial_state |> state_helper "e2" "e4" |> state_helper "h7" "h5" |> state_helper "e4" "e5"
+  |> state_helper "d7" "d5"
+
+let taking_en_passant_state = one_en_passant_state |> state_helper "e5" "d6"
+
+let ignore_en_passant_state = one_en_passant_state |> state_helper "a2" "a4"
+
+let second_en_passant_state =
+  taking_en_passant_state |> state_helper "h5" "h4" |> state_helper "g2" "g4"
+
+let en_passant_into_check =
+  initial_state |> state_helper "e2" "e4" |> state_helper "h7" "h5" |> state_helper "e4" "e5"
+  |> state_helper "e7" "e6" |> state_helper "h2" "h4" |> state_helper "e8" "e7"
+  |> state_helper "a2" "a4" |> state_helper "d7" "d5" |> state_helper "e5" "d6"
+
+(* Boards/Board Setups *)
+
+let fst_board = move (6, 4) (4, 4) None initial_board
+
+let snd_board = move (1, 0) (3, 0) None fst_board
+
+let promotion_board =
+  let move_back_forth prev_move back board =
+    prev_move board |> if back then move (5, 7) (7, 7) None else move (7, 7) (5, 7) None
+  in
+  snd_board
+  |> move (6, 7) (4, 7) None
+  |> move_back_forth (move (0, 0) (2, 0) None) false
+  |> move_back_forth (move (2, 0) (2, 1) None) true
+  |> move_back_forth (move (2, 1) (6, 1) None) false
+  |> move_back_forth (move (6, 1) (6, 0) None) true
+  |> move_back_forth (move (6, 0) (7, 0) None) false
+  |> move_back_forth (move (7, 0) (7, 1) None) true
+  |> move_back_forth (move (3, 0) (4, 0) None) false
+  |> move_back_forth (move (4, 0) (5, 0) None) true
+  |> move_back_forth (move (5, 0) (6, 0) None) false
+  |> move (6, 0) (7, 0) None
+
+let scholar_check = board scholar_state
+
+let double_check = board double_state
+
+let move_into_check =
+  initial_board |> move_helper "c2" "c4" |> move_helper "c7" "c5" |> move_helper "d1" "a4"
+
+let en_passant_check = board en_passant_into_check
 
 (* Other Values *)
 let empty_space = "         "

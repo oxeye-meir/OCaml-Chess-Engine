@@ -12,6 +12,7 @@ type command =
   | Move of position * position
   | Reset
   | Quit
+  | Undo
 
 val parse : string -> command
 (** [parse str] parses a player's input [str] into a [command]. A command is valid if it is not
@@ -22,6 +23,7 @@ val parse : string -> command
     - [parse "a3 c6"] is [Move (5,0),(2,2)]
     - [parse "rEsEt"] is [Reset].
     - [parse "Quit"] is [Quit].
+    - [parse "Undo"] is [Undo].
 
     Requires: [str] contains only alphanumeric (A-Z, a-z, 0-9) and space characters (only ASCII
     character code 32; not tabs or newlines, etc.).

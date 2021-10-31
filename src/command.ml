@@ -6,6 +6,7 @@ type command =
   | Move of position * position
   | Reset
   | Quit
+  | Undo
 
 let format str = str |> String.trim |> String.lowercase_ascii
 
@@ -39,6 +40,7 @@ let parse str =
   let words_list = String.split_on_char ' ' str in
   if formatted_str = "quit" then Quit
   else if formatted_str = "reset" then Reset
+  else if formatted_str = "undo" then Undo
   else if String.length formatted_str = 0 || String.length formatted_str = 1 then
     raise Malformed
   else if List.length words_list > 1 then

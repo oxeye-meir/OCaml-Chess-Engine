@@ -111,13 +111,6 @@ let diagonal_check (startx, starty) (endx, endy) =
   || (endx = startx - 1 && endy = starty + 1)
   || (endx = startx - 1 && endy = starty - 1)
 
-let en_passant_check board piece (x, y) =
-  let startx, starty = position piece in
-  let other_piece = (x, y) |> get_piece board in
-  is_pawn other_piece && enemies piece other_piece
-  && Piece.moves other_piece = 1
-  && same_row (startx, starty) (x, y)
-
 let pawn_moves board piece (x, y) =
   let startx, starty = position piece in
   if diagonal_check (startx, starty) (x, y) then enemy_position board (Piece.color piece) (x, y)
@@ -168,24 +161,61 @@ let rec enemy_under_check board = function
 
 let check board = board |> List.flatten |> enemy_under_check board
 
-let move (x1, y1) (x2, y2) board =
-  let curr_piece = (x1, y1) |> get_piece board in
-  if next_moves board curr_piece |> List.mem (x2, y2) |> not then raise InvalidPos
-  else
-    let new_piece = get_piece board (x2, y2) in
-    let curr_piece_moved = move_piece (x2, y2) curr_piece in
-    let new_board =
-      if is_empty new_piece then
-        let new_piece_moved = move_piece (x1, y1) new_piece in
-        replace_row new_piece_moved x1 y1 board |> replace_row curr_piece_moved x2 y2
+let move (x1, y1) (x2, y2) en_passant board =
+  match en_passant with
+  | Some (prev_pawn_pos, enemy_pawn_pos) ->
+      print_endline "enpassant";
+      let prev_en_passant_pawn_row = fst prev_pawn_pos in
+      let prev_en_passant_pawn_col = snd prev_pawn_pos in
+      if (x1, y1) = enemy_pawn_pos then
+        let pawn_initial = get_piece board (x1, y1) in
+        let pawn_moved = move_piece (x2, y2) pawn_initial in
+        let new_board =
+          replace_row
+            (init_piece "empty" false prev_en_passant_pawn_row prev_en_passant_pawn_col)
+            prev_en_passant_pawn_row prev_en_passant_pawn_col board
+          |> replace_row (init_piece "empty" false x1 y1) x1 y1
+          |> replace_row pawn_moved x2 y2
+        in
+        new_board
       else
-        replace_row (init_piece "empty" false x1 y1) x1 y1 board
-        |> replace_row curr_piece_moved x2 y2
-    in
-    let next_color_pieces =
-      get_pieces_with_condition (fun p -> color p = not (Piece.color curr_piece)) new_board
-    in
-    if enemy_under_check new_board next_color_pieces then raise InvalidPos else new_board
+        let curr_piece = (x1, y1) |> get_piece board in
+        if next_moves board curr_piece |> List.mem (x2, y2) |> not then raise InvalidPos
+        else
+          let new_piece = get_piece board (x2, y2) in
+          let curr_piece_moved = move_piece (x2, y2) curr_piece in
+          let new_board =
+            if is_empty new_piece then
+              let new_piece_moved = move_piece (x1, y1) new_piece in
+              replace_row new_piece_moved x1 y1 board |> replace_row curr_piece_moved x2 y2
+            else
+              replace_row (init_piece "empty" false x1 y1) x1 y1 board
+              |> replace_row curr_piece_moved x2 y2
+          in
+          let next_color_pieces =
+            get_pieces_with_condition
+              (fun p -> color p = not (Piece.color curr_piece))
+              new_board
+          in
+          if enemy_under_check new_board next_color_pieces then raise InvalidPos else new_board
+  | None ->
+      let curr_piece = (x1, y1) |> get_piece board in
+      if next_moves board curr_piece |> List.mem (x2, y2) |> not then raise InvalidPos
+      else
+        let new_piece = get_piece board (x2, y2) in
+        let curr_piece_moved = move_piece (x2, y2) curr_piece in
+        let new_board =
+          if is_empty new_piece then
+            let new_piece_moved = move_piece (x1, y1) new_piece in
+            replace_row new_piece_moved x1 y1 board |> replace_row curr_piece_moved x2 y2
+          else
+            replace_row (init_piece "empty" false x1 y1) x1 y1 board
+            |> replace_row curr_piece_moved x2 y2
+        in
+        let next_color_pieces =
+          get_pieces_with_condition (fun p -> color p = not (Piece.color curr_piece)) new_board
+        in
+        if enemy_under_check new_board next_color_pieces then raise InvalidPos else new_board
 
 let sep = "\n  -------------------------\n"
 

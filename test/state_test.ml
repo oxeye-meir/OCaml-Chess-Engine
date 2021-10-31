@@ -21,8 +21,19 @@ let turn_tests =
 
 let result_tests =
   [
-    result_test "result of initial state is Playing" Playing initial_state;
+    result_test "result of initial state is Playing None" (Playing None) initial_state;
+    result_test "result of moving a pawn two squares is Playing None" (Playing None) fst_state;
     result_test "result of scholar's checkmate is WhiteWin" WhiteWin scholar_state;
+    result_test "result of one valid en passant is Playing Some (3, 3) (3, 4)"
+      (Playing (Some ((3, 3), (3, 4))))
+      one_en_passant_state;
+    result_test "result of ignoring en passant is Playing None" (Playing None)
+      ignore_en_passant_state;
+    result_test "result of taking en passant is Playing None" (Playing None)
+      taking_en_passant_state;
+    result_test "result of second en passant is Playing Some (4, 6) (4, 7)"
+      (Playing (Some ((4, 6), (4, 7))))
+      second_en_passant_state;
   ]
 
 let checkmate_tests =
@@ -30,6 +41,7 @@ let checkmate_tests =
     checkmate_test "Initial board is not a checkmate state" initial_state false;
     checkmate_test "Scholar's checkmate is in a checkmate state" scholar_state true;
     checkmate_test "Double check is not a checkmate state" double_state false;
+    checkmate_test "Black checkmate is in a checkmate state" bl_checkmate true;
   ]
 
 let suite =

@@ -26,7 +26,7 @@ val next_moves : t -> Piece.t -> (int * int) list
 (** [next_moves b p] is a list of coordinates that represent legal positions that a piece p can
     move to on the current board configuration b. *)
 
-val move : int * int -> int * int -> t -> t
+val move : int * int -> int * int -> ((int * int) * (int * int)) option -> t -> t
 (** [move curr_pos new_pos turn b] is the board configuration after the piece on [curr_pos] in
     board [b] is moved to [new_pos]. Raises: InvalidPos if the attempted move is illegal.
     Examples of illegal moves include moving to a position not possible on the board, moving

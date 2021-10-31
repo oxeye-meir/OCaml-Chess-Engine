@@ -12,6 +12,11 @@ type piece_info = {
   y : int;
 }
 
+type castling_validity = {
+  mutable rightvalid : bool;
+  mutable leftvalid : bool;
+}
+
 type t =
   | Pawn of piece_info
   | Rook of piece_info
@@ -102,9 +107,35 @@ let rec rook_leftright col x current_list =
 let valid_rook_moves rook =
   let updown_list = rook_updown 0 in
   let left_right_list = rook_leftright 0 in
-  [] |> updown_list rook.y |> left_right_list rook.x
-  |> List.filter (fun x -> x <> (rook.x, rook.y))
-  |> List.sort_uniq compare
+  let regular_moves =
+    [] |> updown_list rook.y |> left_right_list rook.x
+    |> List.filter (fun x -> x <> (rook.x, rook.y))
+  in
+  if rook.moves = 0 then
+    if rook.y = 0 then (rook.x, rook.y + 3) :: regular_moves
+    else (rook.x, rook.y - 2) :: regular_moves
+  else regular_moves |> List.sort_uniq compare
+
+(* let rec between_empty_helper (distance : int) (p1 : piece_info) (p2 : piece_info) =
+  match distance with
+  | 0 -> true
+  | _ ->
+      if is_empty (Board.get_piece board (p1.x + distance, p1.y)) = false then false
+      else between_empty_helper (distance - 1) p1 p2
+
+let between_empty (piece1 : piece_info) (piece2 : piece_info) : bool =
+  let distance = Int.abs piece1.x - piece2.x in
+  if min piece1.x piece2.x = piece1.x then between_empty_helper distance piece1 piece2
+  else between_empty_helper distance piece2 piece1
+
+let valid_check = { rightvalid = false; leftvalid = false }
+
+let castle_valid (king : piece_info) (rookl : piece_info) (rookr : piece_info) =
+  if king.moves = 0 && rookl.moves = 0 && between_empty king rookl then
+    valid_check.leftvalid <- true;
+  if king.moves = 0 && rookr.moves = 0 && between_empty king rookr then
+    valid_check.rightvalid <- true;
+  valid_check *)
 
 let valid_knight_moves (knight : piece_info) : (int * int) list =
   [
@@ -156,16 +187,21 @@ let valid_queen_moves (queen : piece_info) : (int * int) list =
   |> List.sort_uniq compare
 
 let valid_king_moves (king : piece_info) : (int * int) list =
-  [
-    (king.x + 1, king.y);
-    (king.x - 1, king.y);
-    (king.x, king.y - 1);
-    (king.x, king.y + 1);
-    (king.x + 1, king.y + 1);
-    (king.x + 1, king.y - 1);
-    (king.x - 1, king.y + 1);
-    (king.x - 1, king.y - 1);
-  ]
+  let regular_moves =
+    [
+      (king.x + 1, king.y);
+      (king.x - 1, king.y);
+      (king.x, king.y - 1);
+      (king.x, king.y + 1);
+      (king.x + 1, king.y + 1);
+      (king.x + 1, king.y - 1);
+      (king.x - 1, king.y + 1);
+      (king.x - 1, king.y - 1);
+    ]
+  in
+  if king.moves = 0 then (king.x, king.y + 2) :: (king.x, king.y - 2) :: regular_moves
+  else regular_moves
+
 
 (* Use the piece move logic to get a list of possible moves*)
 let valid_moves = function

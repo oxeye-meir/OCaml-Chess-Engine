@@ -34,7 +34,7 @@ let pp_list pp_elt lst =
   "[" ^ pp_elts lst ^ "]"
 
 let result_printer = function
-  | Playing -> "Playing"
+  | Playing en_passant -> "Playing"
   | WhiteWin -> "WhiteWin"
   | BlackWin -> "BlackWin"
   | Stalemate -> "Stalemate"
@@ -50,6 +50,21 @@ let pos str1 =
   let ch2 = String.get str1 1 in
   (7 - (Char.code ch2 - 49), Char.code ch1 - 97)
 
-let move_helper str1 str2 = move (pos str1) (pos str2)
+let move_helper str1 str2 = move (pos str1) (pos str2) None
 
 let state_helper str1 str2 = change_state (pos str1) (pos str2)
+
+let backrank color x =
+  [
+    init_piece "rook" color x 0;
+    init_piece "knight" color x 1;
+    init_piece "bishop" color x 2;
+    init_piece "queen" color x 3;
+    init_piece "king" color x 4;
+    init_piece "bishop" color x 5;
+    init_piece "knight" color x 6;
+    init_piece "rook" color x 7;
+  ]
+
+let rec pawns color x y lst =
+  if y >= 0 then pawns color x (y - 1) (init_piece "pawn" color x y :: lst) else lst
