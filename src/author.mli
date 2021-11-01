@@ -1,6 +1,6 @@
 (** CS 3110 Fall 2021 Final Project Chess
 
-    @author Katherine Grosul (kg378), Prachi Kelkar (pak226), Robert Zhao (rz87), Xinhao He (xh245), *)
+    @author Katherine Grosul (kg378), Prachi Kelkar (pak226), Robert Zhao (rz87), Xinhao He (xh245) *)
 
 (************************************************************
 

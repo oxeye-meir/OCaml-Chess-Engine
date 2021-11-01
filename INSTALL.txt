@@ -1,0 +1,1 @@
+To run our Chess game, navigate to this project's root directory. From there, you can call "sh chess.sh" to start a game of chess in the terminal. This script will first build the files and then start a game of Chess.
