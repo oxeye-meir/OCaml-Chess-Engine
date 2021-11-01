@@ -30,8 +30,16 @@ let to_string_test name expected_output input =
 
 let get_piece_tests =
   [
-    get_piece_test "the piece at (7,0) after promotion is a Queen" promotion_queen
+    get_piece_test "the piece at (7, 0) after promotion is a Queen" promotion_queen
       promotion_board (7, 0);
+    get_piece_test "the piece at (7, 6) after white castles short is a king" castled_wh_king
+      wh_sh_castle_board (7, 6);
+    get_piece_test "the piece at (0, 6) after black castles short is a king" castled_bl_king
+      bl_sh_castle_board (0, 6);
+    get_piece_test "the piece at (7, 2) after white castles long is a king"
+      long_castled_wh_king wh_lg_castle_board (7, 2);
+    get_piece_test "the piece at (0, 2) after black castles long is a king"
+      long_castled_bl_king bl_lg_castle_board (0, 2);
   ]
 
 let next_moves_tests =
@@ -65,6 +73,12 @@ let invalidpos_tests =
   [
     invalidpos_test "moving to (-1,-1) should raise InvalidPos" initial_board (0, 0) (-1, -1);
     invalidpos_test "Cannot move into a check" move_into_check (1, 3) (3, 3);
+    invalidpos_test "Cannot castle after moving the king" cannot_move_castle (7, 4) (7, 6);
+    invalidpos_test "Cannot castle while under check" cannot_check_castle (7, 4) (7, 6);
+    invalidpos_test "Cannot move into a check while castling" cannot_into_check_castle (7, 4)
+      (7, 6);
+    invalidpos_test "Cannot move through a check square while castling" check_square_castle
+      (7, 4) (7, 6);
   ]
 
 let check_tests =
@@ -73,6 +87,8 @@ let check_tests =
     check_test "Scholar's checkmate should be in a check state" scholar_check true;
     check_test "Double check should be in a check state" double_check true;
     check_test "en passant into check should be in a check state" en_passant_check true;
+    check_test "trying to castle while in check should be in a check state" cannot_check_castle
+      true;
   ]
 
 let to_string_tests =

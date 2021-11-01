@@ -111,31 +111,10 @@ let valid_rook_moves rook =
     [] |> updown_list rook.y |> left_right_list rook.x
     |> List.filter (fun x -> x <> (rook.x, rook.y))
   in
-  if rook.moves = 0 then
+  (if rook.moves = 0 then
     if rook.y = 0 then (rook.x, rook.y + 3) :: regular_moves
     else (rook.x, rook.y - 2) :: regular_moves
-  else regular_moves |> List.sort_uniq compare
-
-(* let rec between_empty_helper (distance : int) (p1 : piece_info) (p2 : piece_info) =
-  match distance with
-  | 0 -> true
-  | _ ->
-      if is_empty (Board.get_piece board (p1.x + distance, p1.y)) = false then false
-      else between_empty_helper (distance - 1) p1 p2
-
-let between_empty (piece1 : piece_info) (piece2 : piece_info) : bool =
-  let distance = Int.abs piece1.x - piece2.x in
-  if min piece1.x piece2.x = piece1.x then between_empty_helper distance piece1 piece2
-  else between_empty_helper distance piece2 piece1
-
-let valid_check = { rightvalid = false; leftvalid = false }
-
-let castle_valid (king : piece_info) (rookl : piece_info) (rookr : piece_info) =
-  if king.moves = 0 && rookl.moves = 0 && between_empty king rookl then
-    valid_check.leftvalid <- true;
-  if king.moves = 0 && rookr.moves = 0 && between_empty king rookr then
-    valid_check.rightvalid <- true;
-  valid_check *)
+  else regular_moves) |> List.sort_uniq compare
 
 let valid_knight_moves (knight : piece_info) : (int * int) list =
   [
@@ -252,17 +231,4 @@ let to_string piece =
       ^ ")"
   | Empty t -> "Empty (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y ^ ")"
 
-(* knight moves can be - 1 up, 2 right - 1 up, 2 left - 1 down, 2 right - 1 down, 2 left - 1
-   left, 2 up - 1 left, 2 down - 1 right, 2 up - 1 right, 2 down *)
 
-(* bishop moves can be - 1 up, 1 right - 1 up, 1 left - 1 down, 1 left - 1 down, 1 right - any
-   scalar multiple of the above *)
-
-(* rook moves can be - 1-7 left - 1-7 right - 1-7 up - 1-7 down - castling *)
-
-(** queen moves can be - Bishop @ Rook moves *)
-
-(* pawn moves can be (special case of king) - 1 or 2 up/down initially - 1 up normally - 1 up,
-   1 right/left for capture - promotion - en passant *)
-
-(** king moves can be - 1 in all 8 directions - castle *)

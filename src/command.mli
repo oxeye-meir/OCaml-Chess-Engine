@@ -13,6 +13,7 @@ type command =
   | Reset
   | Quit
   | Undo
+  | Help
 
 val parse : string -> command
 (** [parse str] parses a player's input [str] into a [command]. A command is valid if it is not
@@ -24,6 +25,7 @@ val parse : string -> command
     - [parse "rEsEt"] is [Reset].
     - [parse "Quit"] is [Quit].
     - [parse "Undo"] is [Undo].
+    - [parse "hELp"] is [Help].
 
     Requires: [str] contains only alphanumeric (A-Z, a-z, 0-9) and space characters (only ASCII
     character code 32; not tabs or newlines, etc.).

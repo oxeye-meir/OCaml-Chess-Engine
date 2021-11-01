@@ -16,6 +16,28 @@ let rec replace_row piece x y = function
   | h :: t ->
       if x = 0 then replace_piece piece y h :: t else h :: replace_row piece (x - 1) y t
 
+let get_piece board (x, y) =
+  if invalid_pos (x, y) then raise InvalidPos
+  else
+    let row = List.nth board x in
+    List.nth row y
+
+let castle_short board piece x y =
+  let rook = get_piece board (x, 7) in
+  let old_x, old_y = position piece in
+  replace_row (move_piece (x, y) piece) x y board
+  |> replace_row (init_piece "empty" false old_x old_y) old_x old_y
+  |> replace_row (move_piece (x, 5) rook) x 5
+  |> replace_row (init_piece "empty" false x 7) x 7
+
+let castle_long board piece x y =
+  let rook = get_piece board (x, 0) in
+  let old_x, old_y = position piece in
+  replace_row (move_piece (x, y) piece) x y board
+  |> replace_row (init_piece "empty" false old_x old_y) old_x old_y
+  |> replace_row (move_piece (x, 3) rook) x 3
+  |> replace_row (init_piece "empty" false x 0) x 0
+
 let row_to_string row num =
   List.fold_left (fun acc piece -> acc ^ name piece ^ " |") (string_of_int num ^ " |") row
 
@@ -25,12 +47,6 @@ let rec empty_squares color x y lst =
 
 let rec pawns color x y lst =
   if y >= 0 then pawns color x (y - 1) (init_piece "pawn" color x y :: lst) else lst
-
-let same_row (r1, _) (r2, _) = r1 = r2
-
-let same_column (_, c1) (_, c2) = c1 = c2
-
-let enemies p1 p2 = Piece.color p1 <> Piece.color p2
 
 let backrank color x =
   [
@@ -43,12 +59,6 @@ let backrank color x =
     init_piece "knight" color x 6;
     init_piece "rook" color x 7;
   ]
-
-let get_piece board (x, y) =
-  if invalid_pos (x, y) then raise InvalidPos
-  else
-    let row = List.nth board x in
-    List.nth row y
 
 let init_board =
   [
@@ -116,22 +126,60 @@ let pawn_moves board piece (x, y) =
   if diagonal_check (startx, starty) (x, y) then enemy_position board (Piece.color piece) (x, y)
   else (x, y) |> get_piece board |> is_empty
 
+let normal_filter board piece =
+  let position = Piece.position piece in
+  let color = Piece.color piece in
+  let total_lst =
+    valid_check board color position (fun (x, y) -> (x - 1, y)) []
+    |> valid_check board color position (fun (x, y) -> (x + 1, y))
+    |> valid_check board color position (fun (x, y) -> (x, y - 1))
+    |> valid_check board color position (fun (x, y) -> (x, y + 1))
+    |> valid_check board color position (fun (x, y) -> (x - 1, y - 1))
+    |> valid_check board color position (fun (x, y) -> (x - 1, y + 1))
+    |> valid_check board color position (fun (x, y) -> (x + 1, y - 1))
+    |> valid_check board color position (fun (x, y) -> (x + 1, y + 1))
+  in
+  List.filter (fun x -> List.mem x total_lst)
+
+let castling_filter board color short =
+  if color && short then
+    empty_position board (0, 1)
+    && empty_position board (0, 2)
+    && empty_position board (0, 3)
+    &&
+    let rook = (0, 0) |> get_piece board in
+    moves rook = 0 && Piece.color rook = color
+  else if color && not short then
+    empty_position board (0, 5)
+    && empty_position board (0, 6)
+    &&
+    let rook = (0, 7) |> get_piece board in
+    moves rook = 0 && Piece.color rook = color
+  else if (not color) && short then
+    empty_position board (7, 1)
+    && empty_position board (7, 2)
+    && empty_position board (7, 3)
+    &&
+    let rook = (7, 0) |> get_piece board in
+    moves rook = 0 && Piece.color rook = color
+  else
+    empty_position board (7, 5)
+    && empty_position board (7, 6)
+    &&
+    let rook = (7, 7) |> get_piece board in
+    moves rook = 0 && Piece.color rook = color
+
+let king_moves board piece (x, y) =
+  if (x, y) = (0, 2) then castling_filter board true true
+  else if (x, y) = (0, 6) then castling_filter board true false
+  else if (x, y) = (7, 2) then castling_filter board false true
+  else if (x, y) = (7, 6) then castling_filter board false false
+  else empty_position board (x, y) || enemy_position board (Piece.color piece) (x, y)
+
 let move_filter board piece =
   if is_pawn piece then List.filter (fun pos -> pawn_moves board piece pos)
-  else if Piece.name piece <> "♞" && Piece.name piece <> "♘" && not (is_king piece) then
-    let position = Piece.position piece in
-    let color = Piece.color piece in
-    let total_lst =
-      valid_check board color position (fun (x, y) -> (x - 1, y)) []
-      |> valid_check board color position (fun (x, y) -> (x + 1, y))
-      |> valid_check board color position (fun (x, y) -> (x, y - 1))
-      |> valid_check board color position (fun (x, y) -> (x, y + 1))
-      |> valid_check board color position (fun (x, y) -> (x - 1, y - 1))
-      |> valid_check board color position (fun (x, y) -> (x - 1, y + 1))
-      |> valid_check board color position (fun (x, y) -> (x + 1, y - 1))
-      |> valid_check board color position (fun (x, y) -> (x + 1, y + 1))
-    in
-    List.filter (fun x -> List.mem x total_lst)
+  else if is_king piece then List.filter (fun pos -> king_moves board piece pos)
+  else if Piece.name piece <> "♞" && Piece.name piece <> "♘" then normal_filter board piece
   else
     List.filter (fun x -> empty_position board x || enemy_position board (Piece.color piece) x)
 
@@ -161,61 +209,54 @@ let rec enemy_under_check board = function
 
 let check board = board |> List.flatten |> enemy_under_check board
 
+let move_into_check board (x, y) enemy_pieces =
+  enemy_pieces
+  |> List.map (next_moves board)
+  |> List.sort_uniq compare |> List.flatten
+  |> List.mem (x, y)
+
+let en_passant_helper (x1, y1) (x2, y2) prev_pawn_pos enemy_pawn_pos curr_piece board =
+  let prev_en_passant_pawn_row = fst prev_pawn_pos in
+  let prev_en_passant_pawn_col = snd prev_pawn_pos in
+  if (x1, y1) = enemy_pawn_pos then
+    let pawn_initial = get_piece board (x1, y1) in
+    let pawn_moved = move_piece (x2, y2) pawn_initial in
+    replace_row
+      (init_piece "empty" false prev_en_passant_pawn_row prev_en_passant_pawn_col)
+      prev_en_passant_pawn_row prev_en_passant_pawn_col board
+    |> replace_row (init_piece "empty" false x1 y1) x1 y1
+    |> replace_row pawn_moved x2 y2
+  else if next_moves board curr_piece |> List.mem (x2, y2) |> not then raise InvalidPos
+  else
+    replace_row (init_piece "empty" false x1 y1) x1 y1 board
+    |> replace_row (move_piece (x2, y2) curr_piece) x2 y2
+
+let castling board piece (x1, y1) (x2, y2) = is_king piece && y1 - y2 |> abs = 2
+
 let move (x1, y1) (x2, y2) en_passant board =
-  match en_passant with
-  | Some (prev_pawn_pos, enemy_pawn_pos) ->
-      print_endline "enpassant";
-      let prev_en_passant_pawn_row = fst prev_pawn_pos in
-      let prev_en_passant_pawn_col = snd prev_pawn_pos in
-      if (x1, y1) = enemy_pawn_pos then
-        let pawn_initial = get_piece board (x1, y1) in
-        let pawn_moved = move_piece (x2, y2) pawn_initial in
-        let new_board =
-          replace_row
-            (init_piece "empty" false prev_en_passant_pawn_row prev_en_passant_pawn_col)
-            prev_en_passant_pawn_row prev_en_passant_pawn_col board
-          |> replace_row (init_piece "empty" false x1 y1) x1 y1
-          |> replace_row pawn_moved x2 y2
-        in
-        new_board
-      else
-        let curr_piece = (x1, y1) |> get_piece board in
+  let curr_piece = (x1, y1) |> get_piece board in
+  let enemy_pieces =
+    if Piece.color curr_piece then get_white_pieces board else get_black_pieces board
+  in
+  let new_board =
+    match en_passant with
+    | Some (prev_pawn_pos, enemy_pawn_pos) ->
+        en_passant_helper (x1, y1) (x2, y2) prev_pawn_pos enemy_pawn_pos curr_piece board
+    | None ->
         if next_moves board curr_piece |> List.mem (x2, y2) |> not then raise InvalidPos
+        else if castling board curr_piece (x1, y1) (x2, y2) then
+          let middle_pos = if y2 < y1 then (x1, y1 - 1) else (x1, y1 + 1) in
+          if
+            enemy_under_check board enemy_pieces
+            || move_into_check board middle_pos enemy_pieces
+          then raise InvalidPos
+          else if y2 - y1 = -2 then castle_long board curr_piece x2 y2
+          else castle_short board curr_piece x2 y2
         else
-          let new_piece = get_piece board (x2, y2) in
-          let curr_piece_moved = move_piece (x2, y2) curr_piece in
-          let new_board =
-            if is_empty new_piece then
-              let new_piece_moved = move_piece (x1, y1) new_piece in
-              replace_row new_piece_moved x1 y1 board |> replace_row curr_piece_moved x2 y2
-            else
-              replace_row (init_piece "empty" false x1 y1) x1 y1 board
-              |> replace_row curr_piece_moved x2 y2
-          in
-          let next_color_pieces =
-            get_pieces_with_condition
-              (fun p -> color p = not (Piece.color curr_piece))
-              new_board
-          in
-          if enemy_under_check new_board next_color_pieces then raise InvalidPos else new_board
-  | None ->
-      let curr_piece = (x1, y1) |> get_piece board in
-      if next_moves board curr_piece |> List.mem (x2, y2) |> not then raise InvalidPos
-      else
-        let new_piece = get_piece board (x2, y2) in
-        let curr_piece_moved = move_piece (x2, y2) curr_piece in
-        let new_board =
-          if is_empty new_piece then
-            let new_piece_moved = move_piece (x1, y1) new_piece in
-            replace_row new_piece_moved x1 y1 board |> replace_row curr_piece_moved x2 y2
-          else
-            replace_row (init_piece "empty" false x1 y1) x1 y1 board
-            |> replace_row curr_piece_moved x2 y2
-        in
-        let next_color_pieces =
-          get_pieces_with_condition (fun p -> color p = not (Piece.color curr_piece)) new_board
-        in
-        if enemy_under_check new_board next_color_pieces then raise InvalidPos else new_board
+          replace_row (init_piece "empty" false x1 y1) x1 y1 board
+          |> replace_row (move_piece (x2, y2) curr_piece) x2 y2
+  in
+  if enemy_under_check new_board enemy_pieces then raise InvalidPos else new_board
 
 let sep = "\n  -------------------------\n"
 

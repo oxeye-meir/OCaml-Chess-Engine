@@ -23,7 +23,7 @@ let bl_pawn = init_piece "pawn" true 1 0
 
 let wh_pawn = init_piece "pawn" false 6 0
 
-let bl_king = init_piece "king" true 2 4
+let bl_king = init_piece "king" true 2 4 |> move_times 1 (2, 4)
 
 let bl_rook = init_piece "rook" true 0 0
 
@@ -52,6 +52,14 @@ let moved_5_times = move_times 5 (3, 0) bl_pawn
 let initial_black_pieces = backrank true 0 @ pawns true 1 7 []
 
 let initial_white_pieces = backrank false 7 @ pawns false 6 7 []
+
+let castled_wh_king = init_piece "king" false 7 4 |> move_times 1 (7, 6)
+
+let castled_bl_king = init_piece "king" true 0 4 |> move_times 1 (0, 6)
+
+let long_castled_wh_king = init_piece "king" false 7 4 |> move_times 1 (7, 2)
+
+let long_castled_bl_king = init_piece "king" true 0 4 |> move_times 1 (0, 2)
 
 (* Board Strings *)
 let sep = "\n  -------------------------\n"
@@ -123,6 +131,39 @@ let en_passant_into_check =
   |> state_helper "e7" "e6" |> state_helper "h2" "h4" |> state_helper "e8" "e7"
   |> state_helper "a2" "a4" |> state_helper "d7" "d5" |> state_helper "e5" "d6"
 
+let wh_castling_short =
+  initial_state |> state_helper "e2" "e4" |> state_helper "e7" "e5" |> state_helper "f1" "c4"
+  |> state_helper "f8" "c5" |> state_helper "g1" "f3" |> state_helper "g8" "f6"
+  |> state_helper "e1" "g1"
+
+let bl_castling_short = wh_castling_short |> state_helper "e8" "g8"
+
+let wh_castling_long =
+  initial_state |> state_helper "d2" "d4" |> state_helper "d7" "d5" |> state_helper "c1" "f4"
+  |> state_helper "c8" "f5" |> state_helper "b1" "c3" |> state_helper "b8" "c6"
+  |> state_helper "d1" "d2" |> state_helper "d8" "d7" |> state_helper "e1" "c1"
+
+let bl_castling_long = wh_castling_long |> state_helper "e8" "c8"
+
+let moved_castle =
+  initial_state |> state_helper "e2" "e4" |> state_helper "e7" "e5" |> state_helper "f1" "c4"
+  |> state_helper "f8" "c5" |> state_helper "g1" "f3" |> state_helper "g8" "f6"
+  |> state_helper "e1" "e2" |> state_helper "a7" "a5" |> state_helper "e2" "e1"
+  |> state_helper "a5" "a4"
+
+let check_castle =
+  initial_state |> state_helper "e2" "e4" |> state_helper "e7" "e5" |> state_helper "f2" "f3"
+  |> state_helper "a7" "a5" |> state_helper "f1" "c4" |> state_helper "a5" "a4"
+  |> state_helper "g1" "h3" |> state_helper "d8" "h4"
+
+let move_into_check_castle =
+  initial_state |> state_helper "e2" "e4" |> state_helper "e7" "e5" |> state_helper "f1" "c4"
+  |> state_helper "d8" "h4" |> state_helper "g1" "h3" |> state_helper "h4" "h3"
+  |> state_helper "a2" "a4" |> state_helper "h3" "h2"
+
+let move_thru_check_castle =
+  initial_state |> state_helper "e2" "e4" |> state_helper "g8" "f6" |> state_helper "f1" "c4"
+  |> state_helper "f6" "h5" |> state_helper "g1" "h3" |> state_helper "h5" "g3"
 (* Boards/Board Setups *)
 
 let fst_board = move (6, 4) (4, 4) None initial_board
@@ -154,6 +195,22 @@ let move_into_check =
   initial_board |> move_helper "c2" "c4" |> move_helper "c7" "c5" |> move_helper "d1" "a4"
 
 let en_passant_check = board en_passant_into_check
+
+let wh_sh_castle_board = board wh_castling_short
+
+let bl_sh_castle_board = board bl_castling_short
+
+let wh_lg_castle_board = board wh_castling_long
+
+let bl_lg_castle_board = board bl_castling_long
+
+let cannot_move_castle = board moved_castle
+
+let cannot_check_castle = board check_castle
+
+let cannot_into_check_castle = board move_into_check_castle
+
+let check_square_castle = board move_thru_check_castle
 
 (* Other Values *)
 let empty_space = "         "
