@@ -25,6 +25,16 @@ let parse_tests =
     parse_test "input \"         a3         c6         \" should parse to Move (5,0) (2,2)"
       (empty_space ^ "a3" ^ empty_space ^ "c6" ^ empty_space)
       (Move ((5, 0), (2, 2)));
+    parse_test "Input \"undo\" shoud parse to Undo" "undo" Undo;
+    parse_test "Input \"         unDO         \" shoud parse to Undo"
+      (empty_space ^ "unDO" ^ empty_space)
+      Undo;
+    parse_test "Input \"UNDO         \" shoud parse to Undo" ("UNDO" ^ empty_space) Undo;
+    parse_test "Input \"HELP\" shoud parse to Help" "HELP" Help;
+    parse_test "Input \"HeLP         \" shoud parse to Help" ("HeLP" ^ empty_space) Help;
+    parse_test "Input \"         help         \" shoud parse to Help"
+      (empty_space ^ "help" ^ empty_space)
+      Help;
   ]
 
 let parse_excep_tests =
