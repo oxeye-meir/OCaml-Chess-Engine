@@ -31,6 +31,9 @@ val checkmate : t -> bool
     'checkmate' state happens when either side's [King] piece is being threatened by the
     opposing side's piece(s) and cannot move anywhere. *)
 
+val stalemate : t -> bool
+(** [stalemate s] is whether or not the current state [s] is in a 'stalemate' state. *)
+
 val undo : t -> t
 (** [undo s] is the previous state of the current state [s]. *)
 

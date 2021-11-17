@@ -83,6 +83,10 @@ let print_check_mate result () =
     | _ -> raise (Failure "Invalid Checkmate"));
   exit 0
 
+let print_stalemate () =
+  ANSITerminal.print_string [ ANSITerminal.blue ] "Stalemate! \n";
+  exit 0
+
 let print_file_error () =
   ANSITerminal.print_string [ ANSITerminal.red ]
     "\nYour file could not be found. Please try again!\n"
@@ -106,6 +110,7 @@ let rec get_current_board state error =
   print_board state;
   print_error error;
   let board = State.board state in
+  if State.stalemate state then print_stalemate ();
   if State.checkmate state then print_check_mate (result state) ();
   if check board then print_check ();
   ANSITerminal.print_string [] (if turn state then "Black move> " else "White move> ");

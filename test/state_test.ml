@@ -12,6 +12,9 @@ let result_test name expected_output state =
 let checkmate_test name state expected_output =
   name >:: fun _ -> checkmate state |> assert_equal expected_output ~printer:string_of_bool
 
+let stalemate_test name state expected_output =
+  name >:: fun _ -> stalemate state |> assert_equal expected_output ~printer:string_of_bool
+
 let turn_tests =
   [
     turn_test "turn of initial state is false (white)" false initial_state;
@@ -48,7 +51,16 @@ let checkmate_tests =
       capture_out_of_mate false;
   ]
 
+let stalemate_tests =
+  [
+    stalemate_test "Initial board is not a stalemate state" init_state false;
+    stalemate_test "Scholar's checkmate is not a stalemate state" scholar_state false;
+    stalemate_test "Double check is not a stalemate state" double_state false;
+    stalemate_test "Black checkmate is not a stalemate state" bl_checkmate false;
+  ]
+
 let suite =
-  "test suite for State" >::: List.flatten [ turn_tests; result_tests; checkmate_tests ]
+  "test suite for State"
+  >::: List.flatten [ turn_tests; result_tests; checkmate_tests; stalemate_tests ]
 
 let _ = run_test_tt_main suite

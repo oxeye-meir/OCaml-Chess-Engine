@@ -52,11 +52,11 @@ let rec move_out_of_check board piece = function
         move_out_of_check board piece t
       else true
 
-let rec try_all_moves board = function
+let rec try_all_check_moves board = function
   | [] -> true
   | piece :: t ->
       if move_out_of_check board piece (next_moves board piece) then false
-      else try_all_moves board t
+      else try_all_check_moves board t
 
 let checkmate state =
   let board = board state in
@@ -64,7 +64,30 @@ let checkmate state =
   if board = init_board then false
   else
     let same_pieces = board |> if turn then get_black_pieces else get_white_pieces in
-    try_all_moves board same_pieces
+    try_all_check_moves board same_pieces
+
+let rec try_move board piece = function
+  | [] -> false
+  | pos :: t ->
+      let result =
+        try move (position piece) pos None board with
+        | InvalidPos -> board
+      in
+      result = board
+
+let rec try_all_moves board = function
+  | [] -> true
+  | piece :: t ->
+      if try_move board piece (next_moves board piece) then false else try_all_moves board t
+
+let stalemate_helper board turn =
+  let pieces = if turn then get_black_pieces board else get_white_pieces board in
+  not (try_all_moves board pieces)
+
+let stalemate state =
+  let board = state.board in
+  let turn = state.turn in
+  stalemate_helper board turn && (not (checkmate state)) && not (check board)
 
 let en_passant_pawn_check board turn = function
   | [ pos1 ] ->
@@ -120,7 +143,9 @@ let change_state pos1 pos2 state =
     let new_state =
       { state with board = new_board; turn = not state.turn; prev_state = previous_state }
     in
-    if checkmate new_state then
+    let is_checkmate = checkmate new_state in
+    if (not is_checkmate) && stalemate new_state then { new_state with result = Stalemate }
+    else if is_checkmate then
       { new_state with result = (if turn state then BlackWin else WhiteWin) }
     else
       let en_passant_enemy = en_passant pos1 pos2 state.board state.turn in
