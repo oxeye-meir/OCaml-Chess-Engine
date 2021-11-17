@@ -34,6 +34,8 @@ let result_tests =
     result_test "result of second en passant is Playing Some (4, 6) (4, 7)"
       (Playing (Some ((4, 6), (4, 7))))
       second_en_passant_state;
+    result_test "result of being able to capture out of mate is Playing None" (Playing None)
+      capture_out_of_mate;
   ]
 
 let checkmate_tests =
@@ -42,6 +44,8 @@ let checkmate_tests =
     checkmate_test "Scholar's checkmate is in a checkmate state" scholar_state true;
     checkmate_test "Double check is not a checkmate state" double_state false;
     checkmate_test "Black checkmate is in a checkmate state" bl_checkmate true;
+    checkmate_test "Being able to capture out of mate is not a checkmate state"
+      capture_out_of_mate false;
   ]
 
 let suite =

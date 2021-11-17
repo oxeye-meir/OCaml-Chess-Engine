@@ -89,6 +89,10 @@ let check_tests =
     check_test "en passant into check should be in a check state" en_passant_check true;
     check_test "trying to castle while in check should be in a check state" cannot_check_castle
       true;
+    check_test "promote into check should be in a check state" promote_into_check true;
+    check_test "capturing an attacking piece is no longer check"
+      (promote_into_check |> move_helper "d8" "f8")
+      false;
   ]
 
 let to_string_tests =

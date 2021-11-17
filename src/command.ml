@@ -38,7 +38,7 @@ let rec get_words_no_spaces (str_lst : string list) = List.filter (( <> ) "") st
 
 let parse str =
   let formatted_str = format str in
-  let words_list = String.split_on_char ' ' str in
+  let words_list = String.split_on_char ' ' formatted_str in
   if formatted_str = "quit" then Quit
   else if formatted_str = "reset" then Reset
   else if formatted_str = "undo" then Undo

@@ -164,6 +164,12 @@ let move_into_check_castle =
 let move_thru_check_castle =
   initial_state |> state_helper "e2" "e4" |> state_helper "g8" "f6" |> state_helper "f1" "c4"
   |> state_helper "f6" "h5" |> state_helper "g1" "h3" |> state_helper "h5" "g3"
+
+let capture_out_of_mate =
+  initial_state |> state_helper "e2" "e4" |> state_helper "e7" "e5" |> state_helper "e1" "e2"
+  |> state_helper "g8" "f6" |> state_helper "e2" "e3" |> state_helper "f8" "c5"
+  |> state_helper "e3" "f3" |> state_helper "d7" "d5" |> state_helper "e4" "d5"
+  |> state_helper "d8" "d5" |> state_helper "f3" "g3" |> state_helper "c5" "f2"
 (* Boards/Board Setups *)
 
 let fst_board = move (6, 4) (4, 4) None initial_board
@@ -193,6 +199,12 @@ let double_check = board double_state
 
 let move_into_check =
   initial_board |> move_helper "c2" "c4" |> move_helper "c7" "c5" |> move_helper "d1" "a4"
+
+let promote_into_check =
+  initial_board |> move_helper "d2" "d4" |> move_helper "e7" "e5" |> move_helper "d4" "e5"
+  |> move_helper "g8" "f6" |> move_helper "e5" "f6" |> move_helper "f8" "e7"
+  |> move_helper "a2" "a4" |> move_helper "e8" "g8" |> move_helper "f6" "e7"
+  |> move_helper "a7" "a5" |> move_helper "e7" "f8"
 
 let en_passant_check = board en_passant_into_check
 
