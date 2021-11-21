@@ -34,7 +34,7 @@ let pos_of_str str =
    if num_of_words = 2 then Move (pos_of_str (List.nth words 0), pos_of_str (List.nth words 1))
    else raise Malformed *)
 
-let rec get_words_no_spaces (str_lst : string list) = List.filter (( <> ) "") str_lst
+let rec get_words_no_spaces str_lst = List.filter (( <> ) "") str_lst
 
 let parse str =
   let formatted_str = format str in
@@ -43,25 +43,13 @@ let parse str =
   else if formatted_str = "reset" then Reset
   else if formatted_str = "undo" then Undo
   else if formatted_str = "help" then Help
-  else if String.length formatted_str = 0 || String.length formatted_str = 1 then
-    raise Malformed
+  else if String.length formatted_str <= 1 then raise Malformed
   else if List.length words_list > 1 then
     let commands_no_spaces = get_words_no_spaces words_list in
     match commands_no_spaces with
-    | []
-    | [ _ ] ->
-        raise Malformed
     | [ a; b ] ->
         if String.length a <> 2 || String.length b <> 2 then raise Malformed
-        else
-          let pos1 =
-            try pos_of_str a with
-            | Malformed -> (-1, -1)
-          in
-          let pos2 =
-            try pos_of_str b with
-            | Malformed -> (-1, -1)
-          in
-          Move (pos1, pos2)
+        else Move (pos_of_str a, pos_of_str b)
     | _ -> raise Malformed
   else raise Malformed
+

@@ -34,13 +34,6 @@ let result s = s.result
 
 let valid_pos (a, b) = a < 8 && a >= 0 && b < 8 && b >= 0
 
-let rec find_kings result = function
-  | [] -> raise InvalidPos
-  | h :: t ->
-      if is_king h then
-        if List.length result = 1 then h :: result else h :: find_kings (h :: result) t
-      else find_kings result t
-
 let rec move_out_of_check board piece = function
   | [] -> false
   | pos :: t ->
@@ -75,19 +68,23 @@ let rec try_move board piece = function
       in
       result = board
 
-let rec try_all_moves board = function
-  | [] -> true
-  | piece :: t ->
-      if try_move board piece (next_moves board piece) then false else try_all_moves board t
-
 let stalemate_helper board turn =
-  let pieces = if turn then get_black_pieces board else get_white_pieces board in
-  not (try_all_moves board pieces)
+  let pieces =
+    (if turn then get_black_pieces board else get_white_pieces board) |> Array.of_list
+  in
+  let non_kings = ref [] in
+  let king_pos = ref 0 in
+  for i = 0 to Array.length pieces - 1 do
+    if is_king pieces.(i) then king_pos := i else non_kings := pieces.(i) :: !non_kings
+  done;
+  let lst = List.map (next_moves board) !non_kings |> List.flatten in
+  let king = pieces.(!king_pos) in
+  lst = [] && try_all_check_moves board [ king ]
 
 let stalemate state =
   let board = state.board in
   let turn = state.turn in
-  stalemate_helper board turn && (not (checkmate state)) && not (check board)
+  stalemate_helper board turn && not (check board)
 
 let en_passant_pawn_check board turn = function
   | [ pos1 ] ->
@@ -128,8 +125,6 @@ let undo state =
 
 let change_state pos1 pos2 state =
   let previous_state = Some state in
-  (* let en_passant_state = en_passant pos1 pos2 state.board state.turn in print_endline
-     (string_of_bool en_passant_state); *)
   let currently_en_passant =
     match state.result with
     | Playing en_passant_position -> en_passant_position

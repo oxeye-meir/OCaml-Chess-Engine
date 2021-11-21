@@ -3,8 +3,7 @@ open Piece
 open Board
 open State
 open Command
-
-exception InvalidText
+open Fileutil
 
 type position = int * int
 
@@ -138,67 +137,10 @@ let rec get_current_board state error =
         state
     | Move (start_coord, end_coord) -> (
         try change_state start_coord end_coord state with
-        | InvalidPos -> get_current_board state InvalidPos
-        | WrongColor -> get_current_board state WrongColor)
+        | Board.InvalidPos -> get_current_board state InvalidPos
+        | State.WrongColor -> get_current_board state WrongColor)
   in
   get_current_board next_state None
-
-let data_dir_prefix = "data" ^ Filename.dir_sep
-
-let pos_of_str str =
-  let char_in_range = function
-    | 'a' .. 'h' -> true
-    | _ -> false
-  in
-  let int_in_range = function
-    | '1' .. '8' -> true
-    | _ -> false
-  in
-  let ch1 = String.get str 0 in
-  let ch2 = String.get str 1 in
-  if char_in_range ch1 && int_in_range ch2 && String.length str = 2 then
-    (7 - (Char.code ch2 - 49), Char.code ch1 - 97)
-  else raise InvalidText
-
-let parse_line state line =
-  let positions = String.split_on_char ' ' line |> List.filter (fun x -> x <> "") in
-  if List.length positions <> 2 then raise InvalidText
-  else
-    let pos1 = pos_of_str (List.nth positions 0) in
-    let pos2 = pos_of_str (List.nth positions 1) in
-    change_state pos1 pos2 state
-
-let rec go_thru_state state line = function
-  | [] -> state
-  | h :: t ->
-      let print_line_error line =
-        ANSITerminal.printf [ ANSITerminal.red ] "Error on line %i: " line
-      in
-      let new_state =
-        try parse_line state h with
-        | InvalidText ->
-            print_line_error line;
-            print_invalid_text ()
-        | InvalidPos ->
-            print_line_error line;
-            print_invalid_move ();
-            exit 0
-        | WrongColor ->
-            print_line_error line;
-            print_wrong_color ();
-            exit 0
-      in
-      go_thru_state new_state (line + 1) t
-
-let rec read_each_line channel acc =
-  try read_each_line channel (input_line channel :: acc) with
-  | End_of_file ->
-      close_in channel;
-      acc
-
-let read_file file =
-  let channel = open_in file in
-  List.rev (read_each_line channel []) |> go_thru_state initial_state 1
 
 let rec start_from_file () =
   ANSITerminal.print_string [ ANSITerminal.cyan ] "> ";
@@ -211,8 +153,24 @@ let rec start_from_file () =
           print_quit ();
           exit 0
       | _ ->
-          get_current_board (read_file (data_dir_prefix ^ file_name ^ ".txt")) None
-          |> print_board)
+          let print_line_error line =
+            ANSITerminal.printf [ ANSITerminal.red ] "Error on line %i: " line
+          in
+          let state =
+            try Fileutil.config file_name with
+            | InvalidText line ->
+                print_line_error line;
+                print_invalid_text ()
+            | InvalidPos line ->
+                print_line_error line;
+                print_invalid_move ();
+                exit 0
+            | WrongColor line ->
+                print_line_error line;
+                print_wrong_color ();
+                exit 0
+          in
+          get_current_board state None |> print_board)
 
 (** [main first_print] prompts for the game to play, then starts it. If [first_print] is true,
     then it prints the welcome message and rules. Otherwise it prompts for a file or begins a
@@ -237,7 +195,7 @@ let rec main first_print =
         "\n Please enter a file name, or type Regular to start a normal game. \n";
       start_from_file ()
     with
-    | _ ->
+    | NotFound ->
         print_file_error ();
         main false
 

@@ -33,3 +33,4 @@ val parse : string -> command
     Raises: [Malformed] if [str] is malformed. An input string is malformed if it is empty
     after being trimmed, it is not some form of "quit" or "reset", or it is not 2 valid Chess
     coordinates.*)
+

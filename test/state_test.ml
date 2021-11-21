@@ -57,6 +57,8 @@ let stalemate_tests =
     stalemate_test "Scholar's checkmate is not a stalemate state" scholar_state false;
     stalemate_test "Double check is not a stalemate state" double_state false;
     stalemate_test "Black checkmate is not a stalemate state" bl_checkmate false;
+    stalemate_test "Stalemate state is a stalemate" stalemate_state true;
+    stalemate_test "not stalemate state is not a stalemate" not_stalemate_state false;
   ]
 
 let suite =

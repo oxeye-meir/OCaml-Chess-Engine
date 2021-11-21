@@ -1,6 +1,7 @@
 open Chess.Board
 open Chess.Piece
 open Chess.State
+open Chess.Fileutil
 open Helper
 
 (* white king ♔ white queen ♕ white rook ♖ white bishop ♗ white knight ♘ white pawn ♙ black
@@ -165,11 +166,12 @@ let move_thru_check_castle =
   initial_state |> state_helper "e2" "e4" |> state_helper "g8" "f6" |> state_helper "f1" "c4"
   |> state_helper "f6" "h5" |> state_helper "g1" "h3" |> state_helper "h5" "g3"
 
-let capture_out_of_mate =
-  initial_state |> state_helper "e2" "e4" |> state_helper "e7" "e5" |> state_helper "e1" "e2"
-  |> state_helper "g8" "f6" |> state_helper "e2" "e3" |> state_helper "f8" "c5"
-  |> state_helper "e3" "f3" |> state_helper "d7" "d5" |> state_helper "e4" "d5"
-  |> state_helper "d8" "d5" |> state_helper "f3" "g3" |> state_helper "c5" "f2"
+let capture_out_of_mate = config "test_config/out_of_mate"
+
+let stalemate_state = config "test_config/stalemate"
+
+let not_stalemate_state = config "test_config/not_stalemate"
+
 (* Boards/Board Setups *)
 
 let fst_board = move (6, 4) (4, 4) None initial_board
