@@ -10,11 +10,7 @@ type piece_info = {
   moves : int;
   x : int;
   y : int;
-}
-
-type castling_validity = {
-  mutable rightvalid : bool;
-  mutable leftvalid : bool;
+  value : int;
 }
 
 type t =
@@ -41,23 +37,23 @@ let init_piece name color x y =
   match name with
   | "pawn" ->
       let piece_name = if color then "♟︎" else "♙" in
-      Pawn { name = piece_name; moves = 0; color; x; y }
+      Pawn { name = piece_name; moves = 0; color; x; y; value = 1 }
   | "knight" ->
       let piece_name = if color then "♞" else "♘" in
-      Knight { name = piece_name; moves = 0; color; x; y }
+      Knight { name = piece_name; moves = 0; color; x; y; value = 3 }
   | "rook" ->
       let piece_name = if color then "♜" else "♖" in
-      Rook { name = piece_name; moves = 0; color; x; y }
+      Rook { name = piece_name; moves = 0; color; x; y; value = 5 }
   | "bishop" ->
       let piece_name = if color then "♝" else "♗" in
-      Bishop { name = piece_name; moves = 0; color; x; y }
+      Bishop { name = piece_name; moves = 0; color; x; y; value = 3 }
   | "king" ->
       let piece_name = if color then "♚" else "♔" in
-      King { name = piece_name; moves = 0; color; x; y }
+      King { name = piece_name; moves = 0; color; x; y; value = 1000 }
   | "queen" ->
       let piece_name = if color then "♛" else "♕" in
-      Queen { name = piece_name; moves = 0; color; x; y }
-  | "empty" -> Empty { name = " "; moves = 0; color; x; y }
+      Queen { name = piece_name; moves = 0; color; x; y; value = 9 }
+  | "empty" -> Empty { name = " "; moves = 0; color; x; y; value = 0 }
   | _ -> raise (InvalidPiece name)
 
 let is_empty piece =
@@ -68,6 +64,8 @@ let is_empty piece =
 let position piece = pattern_helper (fun piece_info -> (piece_info.x, piece_info.y)) piece
 
 let name piece = pattern_helper (fun piece_info -> piece_info.name) piece
+
+let value p = pattern_helper (fun piece -> piece.value) p
 
 let is_king = function
   | King _ -> true
@@ -112,9 +110,10 @@ let valid_rook_moves rook =
     |> List.filter (fun x -> x <> (rook.x, rook.y))
   in
   (if rook.moves = 0 then
-    if rook.y = 0 then (rook.x, rook.y + 3) :: regular_moves
-    else (rook.x, rook.y - 2) :: regular_moves
-  else regular_moves) |> List.sort_uniq compare
+   if rook.y = 0 then (rook.x, rook.y + 3) :: regular_moves
+   else (rook.x, rook.y - 2) :: regular_moves
+  else regular_moves)
+  |> List.sort_uniq compare
 
 let valid_knight_moves (knight : piece_info) : (int * int) list =
   [
@@ -181,7 +180,6 @@ let valid_king_moves (king : piece_info) : (int * int) list =
   if king.moves = 0 then (king.x, king.y + 2) :: (king.x, king.y - 2) :: regular_moves
   else regular_moves
 
-
 (* Use the piece move logic to get a list of possible moves*)
 let valid_moves = function
   | Pawn t -> List.filter valid_pos (valid_pawn_moves t)
@@ -230,5 +228,3 @@ let to_string piece =
       "Bishop " ^ string_of_bool t.color ^ " (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y
       ^ ")"
   | Empty t -> "Empty (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y ^ ")"
-
-

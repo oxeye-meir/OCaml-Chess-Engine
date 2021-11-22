@@ -26,6 +26,9 @@ val board : t -> Board.t
 val result : t -> result
 (** [result s] is the result of the state [s]. *)
 
+val score : t -> bool -> int
+(** [score s c] is the current score of the color [c] in state[s]. *)
+
 val checkmate : t -> bool
 (** [checkmate s turn] is whether or not the current state [s] is in a 'checkmate' state. A
     'checkmate' state happens when either side's [King] piece is being threatened by the

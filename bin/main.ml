@@ -11,6 +11,7 @@ type error =
   | None
   | InvalidPos
   | WrongColor
+  | InvalidText
 
 let print_quit () = ANSITerminal.print_string [ ANSITerminal.yellow ] "QUITTING .... \n"
 
@@ -65,9 +66,15 @@ let print_wrong_color () =
   ANSITerminal.print_string [ ANSITerminal.red ]
     "That piece is not your color. Please try again! \n"
 
+let print_invalid_text () =
+  ANSITerminal.print_string [ ANSITerminal.red ] "Invalid text. Please try again! \n"
+
 let print_error error =
-  if error = InvalidPos then print_invalid_move ()
-  else if error = WrongColor then print_wrong_color ()
+  match error with
+  | InvalidPos -> print_invalid_move ()
+  | WrongColor -> print_wrong_color ()
+  | InvalidText -> print_invalid_text ()
+  | _ -> ()
 
 let print_reset () =
   ANSITerminal.print_string [ ANSITerminal.cyan ] "You have restarted your game! \n"
@@ -95,7 +102,25 @@ let print_invalid_text () =
     "Your file contains some invalid text. Please verify that your file is valid and try again!\n";
   exit 0
 
+let print_draw_offer color =
+  ANSITerminal.printf [ ANSITerminal.cyan ] "%s offered a draw. Do you accept? \n>" color
+
+let print_draw_accept color =
+  ANSITerminal.printf [ ANSITerminal.cyan ]
+    "%s accepted the draw. The game has ended in a draw. \n" color;
+  exit 0
+
+let print_draw_deny color =
+  ANSITerminal.printf [ ANSITerminal.cyan ] "%s denied the draw. The game will continue. \n"
+    color
+
 let print_board state = state |> State.board |> to_string |> ANSITerminal.print_string []
+
+let print_scores state =
+  let black_score = true |> State.score state |> string_of_int in
+  let white_score = false |> State.score state |> string_of_int in
+  ANSITerminal.printf [ ANSITerminal.yellow ] "White: %s \n" white_score;
+  ANSITerminal.printf [ ANSITerminal.magenta ] "Black: %s \n" black_score
 
 let initial_state = Chess.State.init_state
 
@@ -105,12 +130,13 @@ let undo_command state =
       ANSITerminal.print_string [ ANSITerminal.red ] "There are no more turns to undo! \n";
       state
 
-let rec get_current_board state error =
+let rec get_current_board state error score =
   print_board state;
   print_error error;
   let board = State.board state in
   if State.stalemate state then print_stalemate ();
   if State.checkmate state then print_check_mate (result state) ();
+  if score then print_scores state;
   if check board then print_check ();
   ANSITerminal.print_string [] (if turn state then "Black move> " else "White move> ");
   let input = read_line () in
@@ -128,6 +154,22 @@ let rec get_current_board state error =
           in
           print_resign color opponent);
         exit 0
+    | Score -> get_current_board state None true
+    | Draw -> (
+        print_draw_offer (if turn state then "Black" else "White");
+        match read_line () with
+        | exception End_of_file -> get_current_board state InvalidText false
+        | str -> begin
+            let formatted_str = String.lowercase_ascii str in
+            match formatted_str with
+            | "yes"
+            | "draw" ->
+                print_draw_accept (if turn state then "White" else "Black")
+            | "no" ->
+                print_draw_deny (if turn state then "White" else "Black");
+                state
+            | _ -> get_current_board state error false
+          end)
     | Reset ->
         print_reset ();
         initial_state
@@ -137,10 +179,10 @@ let rec get_current_board state error =
         state
     | Move (start_coord, end_coord) -> (
         try change_state start_coord end_coord state with
-        | Board.InvalidPos -> get_current_board state InvalidPos
-        | State.WrongColor -> get_current_board state WrongColor)
+        | Board.InvalidPos -> get_current_board state InvalidPos false
+        | State.WrongColor -> get_current_board state WrongColor false)
   in
-  get_current_board next_state None
+  get_current_board next_state None false
 
 let rec start_from_file () =
   ANSITerminal.print_string [ ANSITerminal.cyan ] "> ";
@@ -148,7 +190,7 @@ let rec start_from_file () =
   | exception End_of_file -> ()
   | file_name -> (
       match String.lowercase_ascii file_name with
-      | "regular" -> get_current_board initial_state None |> print_board
+      | "regular" -> get_current_board initial_state None false |> print_board
       | "quit" ->
           print_quit ();
           exit 0
@@ -170,7 +212,7 @@ let rec start_from_file () =
                 print_wrong_color ();
                 exit 0
           in
-          get_current_board state None |> print_board)
+          get_current_board state None false |> print_board)
 
 (** [main first_print] prompts for the game to play, then starts it. If [first_print] is true,
     then it prints the welcome message and rules. Otherwise it prompts for a file or begins a

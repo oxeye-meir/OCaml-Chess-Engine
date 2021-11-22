@@ -9,6 +9,9 @@ let position_test name expected_output piece =
 let name_test test_name expected_output piece =
   test_name >:: fun _ -> assert_equal expected_output (name piece) ~printer:id
 
+let value_test name expected_output piece =
+  name >:: fun _ -> assert_equal expected_output (value piece) ~printer:string_of_int
+
 let is_king_test name expected_output piece =
   name >:: fun _ -> assert_equal expected_output (is_king piece) ~printer:string_of_bool
 
@@ -41,6 +44,23 @@ let name_tests =
   [
     name_test "name of black pawn is ♟︎" "♟︎" bl_pawn;
     name_test "name of empty square is [ ]" " " empty_sq;
+  ]
+
+let value_tests =
+  [
+    value_test "value of black pawn is 1" 1 bl_pawn;
+    value_test "value of white pawn is 1" 1 wh_pawn;
+    value_test "value of black rook is 5" 5 bl_rook;
+    value_test "value of white rook is 5" 5 wh_rook;
+    value_test "value of black bishop is 3" 3 bl_bishop;
+    value_test "value of white bishop is 3" 3 wh_bishop;
+    value_test "value of black knight is 3" 3 bl_knight;
+    value_test "value of white knight is 3" 3 initial_wh_knight_L;
+    value_test "value of black king is 1000" 1000 bl_king;
+    value_test "value of white king is 1000" 1000 wh_king;
+    value_test "value of black queen is 9" 9 bl_queen;
+    value_test "value of white queen is 9" 9 wh_queen;
+    value_test "value of empty is 0" 0 empty_sq;
   ]
 
 let is_pawn_tests =
@@ -178,6 +198,7 @@ let suite =
            is_pawn_tests;
            position_tests;
            name_tests;
+           value_tests;
            moves_tests;
            color_tests;
            is_empty_tests;

@@ -8,6 +8,8 @@ type command =
   | Quit
   | Undo
   | Help
+  | Draw
+  | Score
 
 let format str = str |> String.trim |> String.lowercase_ascii
 
@@ -26,30 +28,25 @@ let pos_of_str str =
     (7 - (Char.code ch2 - 49), Char.code ch1 - 97)
   else raise Malformed
 
-(* Parse needs to be able to throw away inputs like: slkdfngbsd,khgblsdkhfgb *)
-(* let parse str = let s = format str in let words = remove_empty (String.split_on_char ' ' s)
-   in let num_of_words = List.length words in if num_of_words = 0 then raise Empty else if
-   num_of_words = 1 then let word = List.nth words 0 in if word = "quit" then Quit else if word
-   = "white" then Color White else if word = "black" then Color Black else raise Malformed else
-   if num_of_words = 2 then Move (pos_of_str (List.nth words 0), pos_of_str (List.nth words 1))
-   else raise Malformed *)
-
 let rec get_words_no_spaces str_lst = List.filter (( <> ) "") str_lst
 
 let parse str =
   let formatted_str = format str in
   let words_list = String.split_on_char ' ' formatted_str in
-  if formatted_str = "quit" then Quit
-  else if formatted_str = "reset" then Reset
-  else if formatted_str = "undo" then Undo
-  else if formatted_str = "help" then Help
-  else if String.length formatted_str <= 1 then raise Malformed
-  else if List.length words_list > 1 then
-    let commands_no_spaces = get_words_no_spaces words_list in
-    match commands_no_spaces with
-    | [ a; b ] ->
-        if String.length a <> 2 || String.length b <> 2 then raise Malformed
-        else Move (pos_of_str a, pos_of_str b)
-    | _ -> raise Malformed
-  else raise Malformed
-
+  match formatted_str with
+  | "quit" -> Quit
+  | "reset" -> Reset
+  | "draw" -> Draw
+  | "undo" -> Undo
+  | "help" -> Help
+  | "score" -> Score
+  | _ ->
+      if String.length formatted_str <= 1 then raise Malformed
+      else if List.length words_list > 1 then
+        let commands_no_spaces = get_words_no_spaces words_list in
+        match commands_no_spaces with
+        | [ a; b ] ->
+            if String.length a <> 2 || String.length b <> 2 then raise Malformed
+            else Move (pos_of_str a, pos_of_str b)
+        | _ -> raise Malformed
+      else raise Malformed

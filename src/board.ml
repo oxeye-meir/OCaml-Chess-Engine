@@ -12,23 +12,25 @@ let rec replace_piece piece x y board =
   new_board.(x).(y) <- piece;
   new_board
 
-let get_piece board (x, y) = if invalid_pos (x, y) then raise InvalidPos else board.(x).(y)
+let piece_at board (x, y) = if invalid_pos (x, y) then raise InvalidPos else board.(x).(y)
 
 let castle_short board piece x y =
-  let rook = get_piece board (x, 7) in
+  let rook = piece_at board (x, 7) in
   let old_x, old_y = position piece in
-  replace_piece (move_piece (x, y) piece) x y board
-  |> replace_piece (init_piece "empty" false old_x old_y) old_x old_y
-  |> replace_piece (move_piece (x, 5) rook) x 5
-  |> replace_piece (init_piece "empty" false x 7) x 7
+  ( replace_piece (move_piece (x, y) piece) x y board
+    |> replace_piece (init_piece "empty" false old_x old_y) old_x old_y
+    |> replace_piece (move_piece (x, 5) rook) x 5
+    |> replace_piece (init_piece "empty" false x 7) x 7,
+    init_piece "empty" false x y )
 
 let castle_long board piece x y =
-  let rook = get_piece board (x, 0) in
+  let rook = piece_at board (x, 0) in
   let old_x, old_y = position piece in
-  replace_piece (move_piece (x, y) piece) x y board
-  |> replace_piece (init_piece "empty" false old_x old_y) old_x old_y
-  |> replace_piece (move_piece (x, 3) rook) x 3
-  |> replace_piece (init_piece "empty" false x 0) x 0
+  ( replace_piece (move_piece (x, y) piece) x y board
+    |> replace_piece (init_piece "empty" false old_x old_y) old_x old_y
+    |> replace_piece (move_piece (x, 3) rook) x 3
+    |> replace_piece (init_piece "empty" false x 0) x 0,
+    init_piece "empty" false x y )
 
 let row_to_string row num =
   Array.fold_left (fun acc piece -> acc ^ name piece ^ " |") (string_of_int num ^ " |") row
@@ -68,20 +70,20 @@ let flatten board =
   done;
   !flattened
 
-let get_pieces_with_condition condition board =
+let pieces_with_condition condition board =
   let pieces = flatten board |> Array.to_list in
   List.filter condition pieces
 
-let get_black_pieces board =
-  get_pieces_with_condition (fun piece -> (not (is_empty piece)) && color piece) board
+let black_pieces board =
+  pieces_with_condition (fun piece -> (not (is_empty piece)) && color piece) board
 
-let get_white_pieces board =
-  get_pieces_with_condition (fun piece -> not (is_empty piece || color piece)) board
+let white_pieces board =
+  pieces_with_condition (fun piece -> not (is_empty piece || color piece)) board
 
-let empty_position board (x, y) = is_empty (get_piece board (x, y))
+let empty_position board (x, y) = is_empty (piece_at board (x, y))
 
 let enemy_position board color (x, y) =
-  let enemy_color = (x, y) |> get_piece board |> Piece.color in
+  let enemy_color = (x, y) |> piece_at board |> Piece.color in
   (not (empty_position board (x, y))) && color <> enemy_color
 
 let rec valid_check board piece_color (x, y) transformation lst =
@@ -103,7 +105,7 @@ let pawn_moves board piece (x, y) =
     || (endx = startx - 1 && endy = starty - 1)
   in
   if diagonal_check (init_x, init_y) (x, y) then enemy_position board (Piece.color piece) (x, y)
-  else (x, y) |> get_piece board |> is_empty
+  else (x, y) |> piece_at board |> is_empty
 
 let rec check_is_empty board = function
   | [] -> true
@@ -123,7 +125,7 @@ let castling_filter board color long =
         | false -> ([ (7, 5); (7, 6) ], (7, 7))
       end
   in
-  let rook = get_piece board rook_pos in
+  let rook = piece_at board rook_pos in
   check_is_empty board positions_to_check
   && (name rook = "♖" || name rook = "♜")
   && moves rook = 0
@@ -173,7 +175,7 @@ let next_moves board piece =
 let rec enemy_king_check board curr_color = function
   | [] -> false
   | pos :: t ->
-      let piece_at_pos = get_piece board pos in
+      let piece_at_pos = piece_at board pos in
       if is_king piece_at_pos then
         let piece_at_pos_color = color piece_at_pos in
         if piece_at_pos_color <> curr_color then true else enemy_king_check board curr_color t
@@ -215,38 +217,41 @@ let regular_move (x1, y1) (x2, y2) piece board enemy_pieces =
     if castling board piece (x1, y1) (x2, y2) then
       castling_move (x1, y1) (x2, y2) board piece enemy_pieces
     else
-      replace_piece (init_piece "empty" false x1 y1) x1 y1 board
-      |> replace_piece (move_piece (x2, y2) piece) x2 y2
+      let captured_piece = piece_at board (x2, y2) in
+      ( replace_piece (init_piece "empty" false x1 y1) x1 y1 board
+        |> replace_piece (move_piece (x2, y2) piece) x2 y2,
+        captured_piece )
 
 let en_passant_helper (x1, y1) (x2, y2) prev_pawn_pos enemy_pawn_pos piece board enemies =
   let prev_pawn_row = fst prev_pawn_pos in
   let prev_pawn_col = snd prev_pawn_pos in
   if (x1, y1) = enemy_pawn_pos then
-    let pawn_initial = get_piece board (x1, y1) in
+    let pawn_initial = piece_at board (x1, y1) in
     let pawn_moved = move_piece (x2, y2) pawn_initial in
-    replace_piece
-      (init_piece "empty" false prev_pawn_row prev_pawn_col)
-      prev_pawn_row prev_pawn_col board
-    |> replace_piece (init_piece "empty" false x1 y1) x1 y1
-    |> replace_piece pawn_moved x2 y2
+    ( replace_piece
+        (init_piece "empty" false prev_pawn_row prev_pawn_col)
+        prev_pawn_row prev_pawn_col board
+      |> replace_piece (init_piece "empty" false x1 y1) x1 y1
+      |> replace_piece pawn_moved x2 y2,
+      piece_at board enemy_pawn_pos )
   else regular_move (x1, y1) (x2, y2) piece board enemies
 
-let get_enemy_pieces color board =
-  if color then get_white_pieces board else get_black_pieces board
+let enemy_pieces color board = if color then white_pieces board else black_pieces board
 
 let move (x1, y1) (x2, y2) en_passant board =
-  let curr_piece = (x1, y1) |> get_piece board in
+  let curr_piece = (x1, y1) |> piece_at board in
   let piece_color = Piece.color curr_piece in
-  let enemy_pieces = get_enemy_pieces piece_color board in
-  let new_board =
+  let enemy_pieces_list = enemy_pieces piece_color board in
+  let new_board, captured =
     match en_passant with
     | Some (prev_pawn_pos, enemy_pawn_pos) ->
         en_passant_helper (x1, y1) (x2, y2) prev_pawn_pos enemy_pawn_pos curr_piece board
-          enemy_pieces
-    | None -> regular_move (x1, y1) (x2, y2) curr_piece board enemy_pieces
+          enemy_pieces_list
+    | None -> regular_move (x1, y1) (x2, y2) curr_piece board enemy_pieces_list
   in
-  let new_enemy_pieces = get_enemy_pieces piece_color new_board in
-  if enemy_under_check new_board new_enemy_pieces then raise InvalidPos else new_board
+  let new_enemy_pieces = enemy_pieces piece_color new_board in
+  if enemy_under_check new_board new_enemy_pieces then raise InvalidPos
+  else (new_board, captured)
 
 let sep = "\n  -------------------------\n"
 

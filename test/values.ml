@@ -28,6 +28,12 @@ let bl_king = init_piece "king" true 2 4 |> move_times 1 (2, 4)
 
 let bl_rook = init_piece "rook" true 0 0
 
+let wh_queen = init_piece "queen" false 7 3
+
+let wh_bishop = init_piece "bishop" false 7 2
+
+let wh_king = init_piece "king" false 7 4
+
 let wh_rook = init_piece "rook" false 7 0
 
 let bl_knight = init_piece "knight" true 0 1
@@ -172,28 +178,15 @@ let stalemate_state = config "test_config/stalemate"
 
 let not_stalemate_state = config "test_config/not_stalemate"
 
+let white_checkmate = config "test_config/white_checkmate"
+
+let black_checkmate = config "test_config/black_checkmate"
+
 (* Boards/Board Setups *)
 
-let fst_board = move (6, 4) (4, 4) None initial_board
+let fst_board = move (6, 4) (4, 4) None initial_board |> fst
 
-let snd_board = move (1, 0) (3, 0) None fst_board
-
-let promotion_board =
-  let move_back_forth prev_move back board =
-    prev_move board |> if back then move (5, 7) (7, 7) None else move (7, 7) (5, 7) None
-  in
-  snd_board
-  |> move (6, 7) (4, 7) None
-  |> move_back_forth (move (0, 0) (2, 0) None) false
-  |> move_back_forth (move (2, 0) (2, 1) None) true
-  |> move_back_forth (move (2, 1) (6, 1) None) false
-  |> move_back_forth (move (6, 1) (6, 0) None) true
-  |> move_back_forth (move (6, 0) (7, 0) None) false
-  |> move_back_forth (move (7, 0) (7, 1) None) true
-  |> move_back_forth (move (3, 0) (4, 0) None) false
-  |> move_back_forth (move (4, 0) (5, 0) None) true
-  |> move_back_forth (move (5, 0) (6, 0) None) false
-  |> move (6, 0) (7, 0) None
+let snd_board = move (1, 0) (3, 0) None fst_board |> fst
 
 let scholar_check = board scholar_state
 

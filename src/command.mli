@@ -14,6 +14,8 @@ type command =
   | Quit
   | Undo
   | Help
+  | Draw
+  | Score
 
 val parse : string -> command
 (** [parse str] parses a player's input [str] into a [command]. A command is valid if it is not
@@ -26,6 +28,7 @@ val parse : string -> command
     - [parse "Quit"] is [Quit].
     - [parse "Undo"] is [Undo].
     - [parse "hELp"] is [Help].
+    - [parse "draW"] is [Draw].
 
     Requires: [str] contains only alphanumeric (A-Z, a-z, 0-9) and space characters (only ASCII
     character code 32; not tabs or newlines, etc.).
@@ -33,4 +36,3 @@ val parse : string -> command
     Raises: [Malformed] if [str] is malformed. An input string is malformed if it is empty
     after being trimmed, it is not some form of "quit" or "reset", or it is not 2 valid Chess
     coordinates.*)
-

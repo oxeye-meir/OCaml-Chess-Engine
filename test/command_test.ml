@@ -17,6 +17,10 @@ let parse_tests =
       Reset;
     parse_test "Input Quit should parse to Quit" "Quit" Quit;
     parse_test "Input  quIT  should parse to Quit" "  quIT  " Quit;
+    parse_test "Input dRaW should parse to Draw" "dRaW" Draw;
+    parse_test "Input Draw should parse to Draw" "Draw" Draw;
+    parse_test "Input scOre should parse to Draw" "scOre" Score;
+    parse_test "Input Score should parse to Draw" "Score" Score;
     parse_test "Input a3 c6 should parse to Move (5,0) (2,2)" "a3 c6" (Move ((5, 0), (2, 2)));
     parse_test "Input a1 h7 should parse to Move (7,0) (1,7)" "a1 h7" (Move ((7, 0), (1, 7)));
     parse_test "input \"a3         c6\" should parse to Move (5,0) (2,2)"

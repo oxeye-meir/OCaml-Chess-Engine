@@ -16,6 +16,9 @@ val is_empty : t -> bool
 val position : t -> int * int
 (** [position p] is a tuple representing the position of piece p on the board. *)
 
+val value : t -> int
+(** [value p] is the piece's scoring value. *)
+
 val name : t -> string
 (** [name t] is the unicode character that represents piece [t]. *)
 

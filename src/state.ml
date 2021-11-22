@@ -19,12 +19,22 @@ type result =
 
 type t = {
   board : Board.t;
+  white_score : int;
+  black_score : int;
   turn : bool;
   result : result;
   prev_state : t option;
 }
 
-let init_state = { board = init_board; turn = false; result = Playing None; prev_state = None }
+let init_state =
+  {
+    board = init_board;
+    turn = false;
+    white_score = 0;
+    black_score = 0;
+    result = Playing None;
+    prev_state = None;
+  }
 
 let turn s = s.turn
 
@@ -32,13 +42,17 @@ let board s = s.board
 
 let result s = s.result
 
+let score s = function
+  | true -> s.black_score
+  | false -> s.white_score
+
 let valid_pos (a, b) = a < 8 && a >= 0 && b < 8 && b >= 0
 
 let rec move_out_of_check board piece = function
   | [] -> false
   | pos :: t ->
       let try_current_move =
-        try move (position piece) pos None board with
+        try move (position piece) pos None board |> fst with
         | InvalidPos -> board
       in
       if check try_current_move || try_current_move = board then
@@ -56,22 +70,20 @@ let checkmate state =
   let turn = turn state in
   if board = init_board then false
   else
-    let same_pieces = board |> if turn then get_black_pieces else get_white_pieces in
+    let same_pieces = board |> if turn then black_pieces else white_pieces in
     try_all_check_moves board same_pieces
 
 let rec try_move board piece = function
   | [] -> false
   | pos :: t ->
       let result =
-        try move (position piece) pos None board with
+        try move (position piece) pos None board |> fst with
         | InvalidPos -> board
       in
       result = board
 
 let stalemate_helper board turn =
-  let pieces =
-    (if turn then get_black_pieces board else get_white_pieces board) |> Array.of_list
-  in
+  let pieces = (if turn then black_pieces board else white_pieces board) |> Array.of_list in
   let non_kings = ref [] in
   let king_pos = ref 0 in
   for i = 0 to Array.length pieces - 1 do
@@ -88,11 +100,11 @@ let stalemate state =
 
 let en_passant_pawn_check board turn = function
   | [ pos1 ] ->
-      let piece_at_pos1 = get_piece board pos1 in
+      let piece_at_pos1 = piece_at board pos1 in
       if is_pawn piece_at_pos1 && color piece_at_pos1 <> turn then Some pos1 else None
   | [ pos1; pos2 ] ->
-      let piece_at_pos1 = get_piece board pos1 in
-      let piece_at_pos2 = get_piece board pos2 in
+      let piece_at_pos1 = piece_at board pos1 in
+      let piece_at_pos2 = piece_at board pos2 in
       if is_pawn piece_at_pos1 && color piece_at_pos1 <> turn then Some pos1
       else if is_pawn piece_at_pos2 && color piece_at_pos2 <> turn then Some pos2
       else None
@@ -123,6 +135,8 @@ let undo state =
   | None -> raise NoUndo
   | Some t -> t
 
+let score_increment piece curr_score = curr_score + value piece
+
 let change_state pos1 pos2 state =
   let previous_state = Some state in
   let currently_en_passant =
@@ -131,17 +145,34 @@ let change_state pos1 pos2 state =
     | _ -> None
   in
   let curr_board = board state in
-  let curr_piece = get_piece curr_board pos1 in
+  let curr_piece = piece_at curr_board pos1 in
   if turn state <> color curr_piece then raise WrongColor
   else
-    let new_board = Board.move pos1 pos2 currently_en_passant curr_board in
+    let new_board, captured_piece = Board.move pos1 pos2 currently_en_passant curr_board in
     let new_state =
-      { state with board = new_board; turn = not state.turn; prev_state = previous_state }
+      if turn state then
+        {
+          state with
+          board = new_board;
+          turn = not state.turn;
+          prev_state = previous_state;
+          black_score = score_increment captured_piece state.black_score;
+        }
+      else
+        {
+          state with
+          board = new_board;
+          turn = not state.turn;
+          prev_state = previous_state;
+          white_score = score_increment captured_piece state.white_score;
+        }
     in
     let is_checkmate = checkmate new_state in
     if (not is_checkmate) && stalemate new_state then { new_state with result = Stalemate }
     else if is_checkmate then
-      { new_state with result = (if turn state then BlackWin else WhiteWin) }
+      if turn state then
+        { new_state with black_score = new_state.black_score + 1000; result = BlackWin }
+      else { new_state with white_score = new_state.white_score + 1000; result = WhiteWin }
     else
       let en_passant_enemy = en_passant pos1 pos2 state.board state.turn in
       match en_passant_enemy with
@@ -150,5 +181,3 @@ let change_state pos1 pos2 state =
 
 let rec pawns color x y lst =
   if y >= 0 then pawns color x (y - 1) (init_piece "pawn" color x y :: lst) else lst
-
-(* Other functionalitiess TBD *)

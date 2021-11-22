@@ -3,16 +3,14 @@ open Chess.Board
 open Helper
 open Values
 
-let get_piece_test name expected_output board pos =
-  name >:: fun _ -> assert_equal expected_output (get_piece board pos)
+let piece_at_test name expected_output board pos =
+  name >:: fun _ -> assert_equal expected_output (piece_at board pos)
 
-let get_white_pieces_test name expected_output board =
-  name >:: fun _ ->
-  assert_equal ~cmp:cmp_set_like_lists expected_output (get_white_pieces board)
+let white_pieces_test name expected_output board =
+  name >:: fun _ -> assert_equal ~cmp:cmp_set_like_lists expected_output (white_pieces board)
 
-let get_black_pieces_test name expected_output board =
-  name >:: fun _ ->
-  assert_equal ~cmp:cmp_set_like_lists expected_output (get_black_pieces board)
+let black_pieces_test name expected_output board =
+  name >:: fun _ -> assert_equal ~cmp:cmp_set_like_lists expected_output (black_pieces board)
 
 let next_moves_test name expected_output board piece =
   name >:: fun _ ->
@@ -28,18 +26,16 @@ let check_test name board expected_output =
 let to_string_test name expected_output input =
   name >:: fun _ -> assert_equal expected_output (to_string input) ~printer:id
 
-let get_piece_tests =
+let piece_at_tests =
   [
-    get_piece_test "the piece at (7, 0) after promotion is a Queen" promotion_queen
-      promotion_board (7, 0);
-    get_piece_test "the piece at (7, 6) after white castles short is a king" castled_wh_king
+    piece_at_test "the piece at (7, 6) after white castles short is a king" castled_wh_king
       wh_sh_castle_board (7, 6);
-    get_piece_test "the piece at (0, 6) after black castles short is a king" castled_bl_king
+    piece_at_test "the piece at (0, 6) after black castles short is a king" castled_bl_king
       bl_sh_castle_board (0, 6);
-    get_piece_test "the piece at (7, 2) after white castles long is a king"
-      long_castled_wh_king wh_lg_castle_board (7, 2);
-    get_piece_test "the piece at (0, 2) after black castles long is a king"
-      long_castled_bl_king bl_lg_castle_board (0, 2);
+    piece_at_test "the piece at (7, 2) after white castles long is a king" long_castled_wh_king
+      wh_lg_castle_board (7, 2);
+    piece_at_test "the piece at (0, 2) after black castles long is a king" long_castled_bl_king
+      bl_lg_castle_board (0, 2);
   ]
 
 let next_moves_tests =
@@ -58,15 +54,14 @@ let next_moves_tests =
       initial_board wh_pawn;
     next_moves_test "white rook's next moves after moving a pawn is [(6,0); (5,0)]"
       [ (6, 0); (5, 0) ]
-      (move (6, 0) (4, 0) None initial_board)
+      (move (6, 0) (4, 0) None initial_board |> fst)
       wh_rook;
   ]
 
 let get_color_pieces_tests =
   [
-    get_white_pieces_test "white pieces of initial board" initial_white_pieces initial_board;
-    get_black_pieces_test "all black pieces of initial board" initial_black_pieces
-      initial_board;
+    white_pieces_test "white pieces of initial board" initial_white_pieces initial_board;
+    black_pieces_test "all black pieces of initial board" initial_black_pieces initial_board;
   ]
 
 let invalidpos_tests =
@@ -102,15 +97,13 @@ let to_string_tests =
       fst_board_string fst_board;
     to_string_test "second board's configuration after moving black pawn at (1,0)"
       snd_board_string snd_board;
-    to_string_test "promotion board's configuration after capturing and promotion"
-      promotion_board_string promotion_board;
   ]
 
 let suite =
   "test suite for Board"
   >::: List.flatten
          [
-           get_piece_tests;
+           piece_at_tests;
            get_color_pieces_tests;
            next_moves_tests;
            invalidpos_tests;
