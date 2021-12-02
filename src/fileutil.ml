@@ -31,12 +31,16 @@ let parse_line state str line =
   else
     let pos1 = pos_of_str (List.nth positions 0) line in
     let pos2 = pos_of_str (List.nth positions 1) line in
-    State.change_state pos1 pos2 state
+    change_state pos1 pos2 state
 
 let rec go_thru_state state line = function
   | [] -> state
   | h :: t ->
-      let new_state = parse_line state h line in
+      let new_state =
+        try parse_line state h line with
+        | Board.InvalidPos -> raise (InvalidPos line)
+        | State.WrongColor -> raise (WrongColor line)
+      in
       go_thru_state new_state (line + 1) t
 
 let rec read_each_line channel acc =

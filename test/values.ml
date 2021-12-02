@@ -68,6 +68,38 @@ let long_castled_wh_king = init_piece "king" false 7 4 |> move_times 1 (7, 2)
 
 let long_castled_bl_king = init_piece "king" true 0 4 |> move_times 1 (0, 2)
 
+let checkmated_wh_king = init_piece "king" false 0 0
+
+let checkmated_bl_king = init_piece "king" true 0 0
+
+let kingside_bl_pawn = init_piece "pawn" true 1 5
+
+let black_stalemate_graveyard =
+  [
+    init_piece "pawn" true 1 3 |> move_times 1 (3, 3);
+    init_piece "pawn" true 1 1 |> move_times 1 (3, 1);
+    init_piece "bishop" true 0 2 |> move_times 3 (5, 5);
+  ]
+
+let white_stalemate_graveyard =
+  [
+    init_piece "pawn" false 6 4 |> move_times 2 (3, 3);
+    init_piece "pawn" false 6 0 |> move_times 2 (3, 1);
+    init_piece "rook" false 7 0 |> move_times 1 (3, 0);
+    init_piece "knight" false 7 1 |> move_times 1 (5, 0);
+    init_piece "pawn" false 6 1;
+    init_piece "bishop" false 7 2;
+    init_piece "rook" false 7 7 |> move_times 1 (5, 7);
+    init_piece "bishop" false 7 5 |> move_times 1 (2, 0);
+    init_piece "pawn" false 6 6 |> move_times 1 (4, 6);
+    init_piece "queen" false 7 3;
+    init_piece "knight" false 7 6 |> move_times 1 (5, 5);
+    init_piece "pawn" false 6 3;
+    init_piece "pawn" false 6 2;
+    init_piece "pawn" false 6 5;
+    init_piece "pawn" false 6 7 |> move_times 3 (2, 7);
+  ]
+
 (* Board Strings *)
 let sep = "\n  -------------------------\n"
 

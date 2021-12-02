@@ -19,8 +19,8 @@ type result =
 
 type t = {
   board : Board.t;
-  white_score : int;
-  black_score : int;
+  white_graveyard : Piece.t list;
+  black_graveyard : Piece.t list;
   turn : bool;
   result : result;
   prev_state : t option;
@@ -30,8 +30,8 @@ let init_state =
   {
     board = init_board;
     turn = false;
-    white_score = 0;
-    black_score = 0;
+    white_graveyard = [];
+    black_graveyard = [];
     result = Playing None;
     prev_state = None;
   }
@@ -42,9 +42,17 @@ let board s = s.board
 
 let result s = s.result
 
+let graveyard s = function
+  | true -> s.black_graveyard
+  | false -> s.white_graveyard
+
+let rec score_of acc = function
+  | [] -> acc
+  | h :: t -> score_of (acc + value h) t
+
 let score s = function
-  | true -> s.black_score
-  | false -> s.white_score
+  | true -> score_of 0 s.white_graveyard
+  | false -> score_of 0 s.black_graveyard
 
 let valid_pos (a, b) = a < 8 && a >= 0 && b < 8 && b >= 0
 
@@ -71,7 +79,7 @@ let checkmate state =
   if board = init_board then false
   else
     let same_pieces = board |> if turn then black_pieces else white_pieces in
-    try_all_check_moves board same_pieces
+    try_all_check_moves board same_pieces && check board
 
 let rec try_move board piece = function
   | [] -> false
@@ -135,8 +143,6 @@ let undo state =
   | None -> raise NoUndo
   | Some t -> t
 
-let score_increment piece curr_score = curr_score + value piece
-
 let change_state pos1 pos2 state =
   let previous_state = Some state in
   let currently_en_passant =
@@ -156,7 +162,9 @@ let change_state pos1 pos2 state =
           board = new_board;
           turn = not state.turn;
           prev_state = previous_state;
-          black_score = score_increment captured_piece state.black_score;
+          white_graveyard =
+            (if is_empty captured_piece then state.white_graveyard
+            else captured_piece :: state.white_graveyard);
         }
       else
         {
@@ -164,15 +172,28 @@ let change_state pos1 pos2 state =
           board = new_board;
           turn = not state.turn;
           prev_state = previous_state;
-          white_score = score_increment captured_piece state.white_score;
+          black_graveyard =
+            (if is_empty captured_piece then state.black_graveyard
+            else captured_piece :: state.black_graveyard);
         }
     in
     let is_checkmate = checkmate new_state in
-    if (not is_checkmate) && stalemate new_state then { new_state with result = Stalemate }
-    else if is_checkmate then
+    if is_checkmate then
       if turn state then
-        { new_state with black_score = new_state.black_score + 1000; result = BlackWin }
-      else { new_state with white_score = new_state.white_score + 1000; result = WhiteWin }
+        {
+          new_state with
+          white_graveyard = init_piece "king" false 0 0 :: new_state.white_graveyard;
+          (* This is to maintain the score += 1000 during checkmate. Can remove if we no longer
+             want that. *)
+          result = BlackWin;
+        }
+      else
+        {
+          new_state with
+          black_graveyard = init_piece "king" true 0 0 :: new_state.black_graveyard;
+          result = WhiteWin;
+        }
+    else if stalemate new_state then { new_state with result = Stalemate }
     else
       let en_passant_enemy = en_passant pos1 pos2 state.board state.turn in
       match en_passant_enemy with

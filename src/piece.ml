@@ -180,7 +180,6 @@ let valid_king_moves (king : piece_info) : (int * int) list =
   if king.moves = 0 then (king.x, king.y + 2) :: (king.x, king.y - 2) :: regular_moves
   else regular_moves
 
-(* Use the piece move logic to get a list of possible moves*)
 let valid_moves = function
   | Pawn t -> List.filter valid_pos (valid_pawn_moves t)
   | Rook t -> List.filter valid_pos (valid_rook_moves t)

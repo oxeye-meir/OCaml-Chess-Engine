@@ -15,6 +15,10 @@ let checkmate_test name state expected_output =
 let stalemate_test name state expected_output =
   name >:: fun _ -> stalemate state |> assert_equal expected_output ~printer:string_of_bool
 
+let graveyard_test name expected_output state color =
+  name >:: fun _ ->
+  assert_equal ~cmp:cmp_set_like_lists expected_output (graveyard state color)
+
 let score_test name state color expected_output =
   name >:: fun _ -> score state color |> assert_equal expected_output ~printer:string_of_int
 
@@ -42,6 +46,9 @@ let result_tests =
       second_en_passant_state;
     result_test "result of being able to capture out of mate is Playing None" (Playing None)
       capture_out_of_mate;
+    result_test "result of black checkmate is BlackWin" BlackWin black_checkmate;
+    result_test "result of white checkmate is WhiteWin" WhiteWin white_checkmate;
+    result_test "result of stalemate is Stalemate" Stalemate stalemate_state;
   ]
 
 let checkmate_tests =
@@ -52,6 +59,7 @@ let checkmate_tests =
     checkmate_test "Black checkmate is in a checkmate state" bl_checkmate true;
     checkmate_test "Being able to capture out of mate is not a checkmate state"
       capture_out_of_mate false;
+    checkmate_test "Stalemate is not a checkmate state" stalemate_state false;
   ]
 
 let stalemate_tests =
@@ -64,6 +72,23 @@ let stalemate_tests =
     stalemate_test "not stalemate state is not a stalemate" not_stalemate_state false;
   ]
 
+let graveyard_tests =
+  [
+    graveyard_test "graveyard of white initially is []" [] init_state false;
+    graveyard_test "graveyard of black initially is []" [] init_state true;
+    graveyard_test "graveyard of white in black checkmate is [King]" [ checkmated_wh_king ]
+      black_checkmate false;
+    graveyard_test "graveyard of black in black checkmate is []" [] black_checkmate true;
+    graveyard_test "graveyard of white in white checkmate is []" [] white_checkmate false;
+    graveyard_test "graveyard of black in white checkmate is [King, Pawn]"
+      [ checkmated_bl_king; kingside_bl_pawn ]
+      white_checkmate true;
+    graveyard_test "graveyard of white in stalemate is white_graveyard"
+      white_stalemate_graveyard stalemate_state false;
+    graveyard_test "graveyard of black in stalemate is black_graveyard"
+      black_stalemate_graveyard stalemate_state true;
+  ]
+
 let score_tests =
   [
     score_test "Initial white score is 0" init_state false 0;
@@ -72,10 +97,20 @@ let score_tests =
     score_test "White score of out of mate state is 1" capture_out_of_mate false 1;
     score_test "Black score after checkmate is 1000" black_checkmate true 1000;
     score_test "White score after checkmate is 1001" white_checkmate false 1001;
+    score_test "Black score after stalemate is 39" stalemate_state true 39;
+    score_test "White score after stalemate is 5" stalemate_state false 5;
   ]
 
 let suite =
   "test suite for State"
-  >::: List.flatten [ turn_tests; result_tests; checkmate_tests; stalemate_tests; score_tests ]
+  >::: List.flatten
+         [
+           turn_tests;
+           result_tests;
+           checkmate_tests;
+           stalemate_tests;
+           graveyard_tests;
+           score_tests;
+         ]
 
 let _ = run_test_tt_main suite

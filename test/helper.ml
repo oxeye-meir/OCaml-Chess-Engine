@@ -55,12 +55,6 @@ let move_helper str1 str2 board = move (pos str1) (pos str2) None board |> fst
 
 let state_helper str1 str2 = change_state (pos str1) (pos str2)
 
-(* let config_helper file = let test_prefix = "data" ^ Filename.dir_sep ^ "test_config" ^
-   Filename.dir_sep in let arr = read_file (test_prefix ^ file ^ ".txt") |> Array.of_list in
-   let pos_list = arr |> Array.map (fun str -> String.split_on_char ' ' str |> Array.of_list |>
-   Array.map pos) in let state = ref init_state in for i = 0 to Array.length pos_list - 1 do
-   state := change_state pos_list.(i).(0) pos_list.(i).(1) !state done; !state *)
-
 let backrank color x =
   [
     init_piece "rook" color x 0;

@@ -130,14 +130,24 @@ let undo_command state =
       ANSITerminal.print_string [ ANSITerminal.red ] "There are no more turns to undo! \n";
       state
 
-let rec get_current_board state error score =
+let quit_helper state =
+  if state = initial_state then print_quit ()
+  else
+    let color, opponent = if turn state then ("Black", "White") else ("White", "Black") in
+    print_resign color opponent
+
+let pre_input_printing state error score =
   print_board state;
   print_error error;
-  let board = State.board state in
-  if State.stalemate state then print_stalemate ();
-  if State.checkmate state then print_check_mate (result state) ();
+  let curr_result = State.result state in
+  if curr_result = Stalemate then print_stalemate ();
+  if State.checkmate state then print_check_mate curr_result ();
   if score then print_scores state;
-  if check board then print_check ();
+  let board = State.board state in
+  if check board then print_check ()
+
+let rec get_current_board state error score =
+  pre_input_printing state error score;
   ANSITerminal.print_string [] (if turn state then "Black move> " else "White move> ");
   let input = read_line () in
   let command =
@@ -147,12 +157,7 @@ let rec get_current_board state error score =
   let next_state =
     match command with
     | Quit ->
-        (if state = initial_state then print_quit ()
-        else
-          let color, opponent =
-            if turn state then ("Black", "White") else ("White", "Black")
-          in
-          print_resign color opponent);
+        quit_helper state;
         exit 0
     | Score -> get_current_board state None true
     | Draw -> (

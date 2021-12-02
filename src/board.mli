@@ -9,7 +9,7 @@ val init_board : t
     placed in their correct initial positions. *)
 
 val piece_at : t -> int * int -> Piece.t
-(** [piece_at board pos] is the piece located on [board] at position [pos]. Raises: InvalidPos
+(** [piece_at board pos] is the piece located on [board] at position [pos]. Raises: [InvalidPos]
     if [pos] is not a valid position (either x or y is less than 0 or more than 7.) *)
 
 val black_pieces : t -> Piece.t list
@@ -29,7 +29,7 @@ val next_moves : t -> Piece.t -> (int * int) list
 val move : int * int -> int * int -> ((int * int) * (int * int)) option -> t -> t * Piece.t
 (** [move curr_pos new_pos turn b] is a tuple of the board configuration after the piece on
     [curr_pos] in board [b] is moved to [new_pos] and the piece that was just captured (Empty
-    if nothing was captured). Raises: InvalidPos if the attempted move is illegal. Examples of
+    if nothing was captured). Raises: [InvalidPos] if the attempted move is illegal. Examples of
     illegal moves include moving to a position not possible on the board, moving the other
     player's piece on your turn, moving a piece to somewhere it cannot move.*)
 
