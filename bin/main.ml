@@ -4,6 +4,7 @@ open Board
 open State
 open Command
 open Fileutil
+open Unix
 
 type position = int * int
 
@@ -102,6 +103,9 @@ let print_invalid_text () =
     "Your file contains some invalid text. Please verify that your file is valid and try again!\n";
   exit 0
 
+let print_invalid_time () =
+  ANSITerminal.print_string [ ANSITerminal.red ] "Invalid time format! Please try again.\n"
+
 let print_draw_offer color =
   ANSITerminal.printf [ ANSITerminal.cyan ] "%s offered a draw. Do you accept? \n>" color
 
@@ -122,6 +126,36 @@ let print_scores state =
   ANSITerminal.printf [ ANSITerminal.yellow ] "White: %s \n" white_score;
   ANSITerminal.printf [ ANSITerminal.magenta ] "Black: %s \n" black_score
 
+let rec prompt_time () =
+  ANSITerminal.print_string [ ANSITerminal.cyan ]
+    "Please enter the number of time control, in minutes (between 5-60),\n\
+     or untimed/casual for no time. \n\
+     > ";
+  match read_line () with
+  | exception End_of_file ->
+      print_invalid_time ();
+      prompt_time ()
+  | s -> begin
+      try
+        let time_control = float_of_string s in
+        if time_control < 5. || time_control > 60. then (
+          print_invalid_time ();
+          prompt_time ())
+        else
+          let seconds = time_control *. 60. in
+          Some (seconds, seconds)
+      with
+      | _ ->
+          let formatted_str = String.lowercase_ascii s in
+          if formatted_str = "quit" then (
+            print_quit ();
+            exit 0)
+          else if formatted_str = "untimed" || formatted_str = "casual" then None
+          else (
+            print_invalid_time ();
+            prompt_time ())
+    end
+
 let initial_state = Chess.State.init_state
 
 let undo_command state =
@@ -136,58 +170,97 @@ let quit_helper state =
     let color, opponent = if turn state then ("Black", "White") else ("White", "Black") in
     print_resign color opponent
 
-let pre_input_printing state error score =
-  print_board state;
-  print_error error;
-  let curr_result = State.result state in
-  if curr_result = Stalemate then print_stalemate ();
-  if State.checkmate state then print_check_mate curr_result ();
-  if score then print_scores state;
-  let board = State.board state in
-  if check board then print_check ()
+let print_time_left time1 time2 =
+  ANSITerminal.printf [ ANSITerminal.cyan ] "White Time: %s \nBlack Time: %s\n" time1 time2
 
-let rec get_current_board state error score =
-  pre_input_printing state error score;
-  ANSITerminal.print_string [] (if turn state then "Black move> " else "White move> ");
+let print_time_over color =
+  let turn, opponent = if color then ("Black", "White") else ("White", "Black") in
+  ANSITerminal.printf [ ANSITerminal.cyan ] "%s's time has run out. %s won!\n" turn opponent;
+  exit 0
+
+let mm_ss_string time =
+  let minutes = time /. 60. in
+  let minutes_int = int_of_float minutes in
+  let seconds = time -. float_of_int (minutes_int * 60) in
+  let minutes_str = string_of_int minutes_int in
+  let seconds_str = seconds |> int_of_float |> string_of_int in
+  minutes_str ^ ":" ^ if seconds < 10. then "0" ^ seconds_str else seconds_str
+
+let pre_input_printing state error times score =
+  let helper_printing state error score =
+    print_error error;
+    let curr_result = State.result state in
+    if curr_result = Stalemate then print_stalemate ();
+    if State.checkmate state then print_check_mate curr_result ();
+    if score then print_scores state;
+    let board = State.board state in
+    if check board then print_check ();
+    ANSITerminal.print_string [] (if turn state then "Black move> " else "White move> ")
+  in
+  match times with
+  | Some (bl_times, wh_times) ->
+      if bl_times <= 0.0 then print_time_over true
+      else if wh_times <= 0.0 then print_time_over false
+      else ();
+      print_board state;
+      print_time_left (wh_times |> mm_ss_string) (bl_times |> mm_ss_string);
+      helper_printing state error score
+  | None ->
+      print_board state;
+      helper_printing state error score
+
+let rec get_current_board state error times score =
+  pre_input_printing state error times score;
+  let start_time = gettimeofday () in
   let input = read_line () in
   let command =
     try parse input with
     | Malformed -> Move ((-1, -1), (-1, -1))
   in
-  let next_state =
-    match command with
-    | Quit ->
-        quit_helper state;
-        exit 0
-    | Score -> get_current_board state None true
-    | Draw -> (
-        print_draw_offer (if turn state then "Black" else "White");
-        match read_line () with
-        | exception End_of_file -> get_current_board state InvalidText false
-        | str -> begin
-            let formatted_str = String.lowercase_ascii str in
-            match formatted_str with
-            | "yes"
-            | "draw" ->
-                print_draw_accept (if turn state then "White" else "Black")
-            | "no" ->
-                print_draw_deny (if turn state then "White" else "Black");
-                state
-            | _ -> get_current_board state error false
-          end)
-    | Reset ->
-        print_reset ();
-        initial_state
-    | Undo -> undo_command state
-    | Help ->
-        print_help ();
-        state
-    | Move (start_coord, end_coord) -> (
-        try change_state start_coord end_coord state with
-        | Board.InvalidPos -> get_current_board state InvalidPos false
-        | State.WrongColor -> get_current_board state WrongColor false)
+  let difference = gettimeofday () -. start_time in
+  let new_times =
+    match times with
+    | Some (bl_times, wh_times) ->
+        if turn state then Some (bl_times -. difference, wh_times)
+        else Some (bl_times, wh_times -. difference)
+    | None -> None
   in
-  get_current_board next_state None false
+  let next_state = command_helper state new_times error command in
+  get_current_board next_state None new_times false
+
+and command_helper state times error = function
+  | Quit ->
+      quit_helper state;
+      exit 0
+  | Score -> get_current_board state None times true
+  | Draw -> draw_helper state times error
+  | Reset ->
+      print_reset ();
+      initial_state
+  | Undo -> undo_command state
+  | Help ->
+      print_help ();
+      state
+  | Move (start_coord, end_coord) -> (
+      try change_state start_coord end_coord state with
+      | Board.InvalidPos -> get_current_board state InvalidPos times false
+      | State.WrongColor -> get_current_board state WrongColor times false)
+
+and draw_helper state times error =
+  print_draw_offer (if turn state then "Black" else "White");
+  match read_line () with
+  | exception End_of_file -> get_current_board state InvalidText times false
+  | str -> begin
+      let formatted_str = String.lowercase_ascii str in
+      match formatted_str with
+      | "yes"
+      | "draw" ->
+          print_draw_accept (if turn state then "White" else "Black")
+      | "no" ->
+          print_draw_deny (if turn state then "White" else "Black");
+          state
+      | _ -> get_current_board state error times false
+    end
 
 let rec start_from_file () =
   ANSITerminal.print_string [ ANSITerminal.cyan ] "> ";
@@ -195,7 +268,7 @@ let rec start_from_file () =
   | exception End_of_file -> ()
   | file_name -> (
       match String.lowercase_ascii file_name with
-      | "regular" -> get_current_board initial_state None false |> print_board
+      | "regular" -> get_current_board initial_state None (prompt_time ()) false |> print_board
       | "quit" ->
           print_quit ();
           exit 0
@@ -217,7 +290,7 @@ let rec start_from_file () =
                 print_wrong_color ();
                 exit 0
           in
-          get_current_board state None false |> print_board)
+          get_current_board state None (prompt_time ()) false |> print_board)
 
 (** [main first_print] prompts for the game to play, then starts it. If [first_print] is true,
     then it prints the welcome message and rules. Otherwise it prompts for a file or begins a
@@ -239,7 +312,7 @@ let rec main first_print =
   else
     try
       ANSITerminal.print_string [ ANSITerminal.cyan ]
-        "\n Please enter a file name, or type Regular to start a normal game. \n";
+        "\nPlease enter a file name, or type Regular to start a normal game. \n";
       start_from_file ()
     with
     | NotFound ->
