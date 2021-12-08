@@ -27,6 +27,9 @@ let turn_tests =
     turn_test "turn of initial state is false (white)" false initial_state;
     turn_test "turn of state after one move is true (black)" true fst_state;
     turn_test "turn of state after 2 moves is false (white)" false snd_state;
+    turn_test "turn of before moving into promotion is false (white)" false pre_promotion;
+    turn_test "turn of state after moving into promotion is still false (white)" false
+      promotion_state;
   ]
 
 let result_tests =
@@ -49,6 +52,10 @@ let result_tests =
     result_test "result of black checkmate is BlackWin" BlackWin black_checkmate;
     result_test "result of white checkmate is WhiteWin" WhiteWin white_checkmate;
     result_test "result of stalemate is Stalemate" Stalemate stalemate_state;
+    result_test "result of a state before promotion is Playing None" (Playing None)
+      pre_promotion;
+    result_test "result of promoting is Promotion (0,5)" (Promotion (0, 5)) promotion_state;
+    result_test "result after promoting is Playing None" (Playing None) after_promote;
   ]
 
 let checkmate_tests =
@@ -60,6 +67,8 @@ let checkmate_tests =
     checkmate_test "Being able to capture out of mate is not a checkmate state"
       capture_out_of_mate false;
     checkmate_test "Stalemate is not a checkmate state" stalemate_state false;
+    checkmate_test "Pre-promotion is not a checkmate state" pre_promotion false;
+    checkmate_test "Promoting into a queen is not a checkmate state" promotion_state false;
   ]
 
 let stalemate_tests =
@@ -70,6 +79,8 @@ let stalemate_tests =
     stalemate_test "Black checkmate is not a stalemate state" bl_checkmate false;
     stalemate_test "Stalemate state is a stalemate" stalemate_state true;
     stalemate_test "not stalemate state is not a stalemate" not_stalemate_state false;
+    stalemate_test "Pre-promotion is not a stalemate state" pre_promotion false;
+    stalemate_test "Promoting into a queen is not a stalemate state" promotion_state false;
   ]
 
 let graveyard_tests =
@@ -87,6 +98,10 @@ let graveyard_tests =
       white_stalemate_graveyard stalemate_state false;
     graveyard_test "graveyard of black in stalemate is black_graveyard"
       black_stalemate_graveyard stalemate_state true;
+    graveyard_test "Black graveyard before promoting is bl_promotion_graveyard"
+      bl_promotion_graveyard promotion_state true;
+    graveyard_test "Black graveyard after promoting is still bl_promotion_graveyard"
+      bl_promotion_graveyard after_promote true;
   ]
 
 let score_tests =

@@ -36,6 +36,7 @@ let pp_list pp_elt lst =
 
 let result_printer = function
   | Playing en_passant -> "Playing"
+  | Promotion _ -> "Promotion"
   | WhiteWin -> "WhiteWin"
   | BlackWin -> "BlackWin"
   | Stalemate -> "Stalemate"

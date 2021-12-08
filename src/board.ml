@@ -230,13 +230,16 @@ let en_passant_helper (x1, y1) (x2, y2) prev_pawn_pos enemy_pawn_pos piece board
     let pawn_moved = move_piece (x2, y2) pawn_initial in
     ( replace_piece
         (init_piece "empty" false prev_pawn_row prev_pawn_col)
-        prev_pawn_row prev_pawn_col board
-      |> replace_piece (init_piece "empty" false x1 y1) x1 y1
-      |> replace_piece pawn_moved x2 y2,
+        prev_pawn_row prev_pawn_col
+        (board
+        |> replace_piece (init_piece "empty" false x1 y1) x1 y1
+        |> replace_piece pawn_moved x2 y2),
       piece_at board enemy_pawn_pos )
   else regular_move (x1, y1) (x2, y2) piece board enemies
 
 let enemy_pieces color board = if color then white_pieces board else black_pieces board
+
+let promotion (x, y) board piece = replace_piece piece x y board
 
 let move (x1, y1) (x2, y2) en_passant board =
   let curr_piece = (x1, y1) |> piece_at board in

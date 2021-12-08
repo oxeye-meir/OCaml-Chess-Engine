@@ -189,16 +189,9 @@ let valid_moves = function
   | King t -> List.filter valid_pos (valid_king_moves t)
   | _ -> raise EmptySquare
 
-let pawn_move (x, y) t =
-  let bl_promotion = t.color && x = 7 in
-  let wh_promotion = (not t.color) && x = 0 in
-  let name = if bl_promotion then "♛" else if wh_promotion then "♕" else t.name in
-  let new_info = { t with name; moves = t.moves + 1; x; y } in
-  if bl_promotion || wh_promotion then Queen new_info else Pawn new_info
-
 let move_piece (x, y) piece =
   match piece with
-  | Pawn t -> pawn_move (x, y) t
+  | Pawn t -> Pawn { t with moves = t.moves + 1; x; y }
   | Knight t -> Knight { t with moves = t.moves + 1; x; y }
   | Rook t -> Rook { t with moves = t.moves + 1; x; y }
   | Bishop t -> Bishop { t with moves = t.moves + 1; x; y }

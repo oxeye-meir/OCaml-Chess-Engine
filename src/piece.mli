@@ -5,7 +5,7 @@ type t
 (** The abstract type of values representing pieces. *)
 
 type color = bool
-(** The color of the piece. If true, then the piece is black, else it is white.*)
+(** The color of the piece. If true, then the piece is black, else it is white. *)
 
 val init_piece : string -> bool -> int -> int -> t
 (** [init name color x y] initializes a piece with [name], [color], and position ([x], [y]). *)
@@ -29,15 +29,15 @@ val is_pawn : t -> bool
 (** [is_pawn t] is whether or not the piece t is a Pawn. *)
 
 val color : t -> bool
-(** [color t] is the color of the piece [t].*)
+(** [color t] is the color of the piece [t]. *)
 
 val moves : t -> int
-(** [moves t] is the move counter of the piece [t].*)
+(** [moves t] is the move counter of the piece [t]. *)
 
 val valid_moves : t -> (int * int) list
 (** [valid_moves p] is a tuple list representing the possible next moves of piece p on the
     board. *)
 
 val move_piece : int * int -> t -> t
-(** [move_piece pos piece] is the piece with its position updated to [pos].*)
-
+(** [move_piece pos piece] is [piece] with its position updated to [pos]. If [piece] is a pawn
+    and is able to promote, it is promoted to [promotion_piece]. *)

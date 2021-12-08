@@ -1,6 +1,7 @@
 (** The type representing the result of a chess game. *)
 type result =
   | Playing of ((int * int) * (int * int)) option
+  | Promotion of (int * int)
   | WhiteWin
   | BlackWin
   | Stalemate
@@ -10,6 +11,10 @@ exception WrongColor
 
 exception NoUndo
 (** The exception to be raised when a player tries undoing to a state that does not exist. *)
+
+exception IllegalPromotion
+(** The exception to be raised when a player tries to promote when there is no possible
+    promotion, or promotes to an invalid piece. *)
 
 type t
 (** The abstract type representing a state of the game. *)
@@ -43,6 +48,9 @@ val stalemate : t -> bool
 
 val undo : t -> t
 (** [undo s] is the previous state of the current state [s]. *)
+
+val promotion_piece : Piece.t -> t -> t
+(**[promotion_piece piece state] is the new state from promoting the piece at [pos] to [piece]. *)
 
 val change_state : int * int -> int * int -> t -> t
 (** [change_state curr_pos new_pos state] is the new state after moving the board of current

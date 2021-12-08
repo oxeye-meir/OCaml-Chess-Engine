@@ -17,6 +17,12 @@ type command =
   | Draw
   | Score
 
+type promotion_pieces =
+  | Knight
+  | Rook
+  | Queen
+  | Bishop
+
 val parse : string -> command
 (** [parse str] parses a player's input [str] into a [command]. A command is valid if it is not
     [Malformed]. See the examples below.
@@ -36,3 +42,5 @@ val parse : string -> command
     Raises: [Malformed] if [str] is malformed. An input string is malformed if it is empty
     after being trimmed, it is not some form of "quit" or "reset", or it is not 2 valid Chess
     coordinates.*)
+
+val promotion_parse : string -> promotion_pieces

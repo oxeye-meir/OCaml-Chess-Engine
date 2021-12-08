@@ -100,6 +100,14 @@ let white_stalemate_graveyard =
     init_piece "pawn" false 6 7 |> move_times 3 (2, 7);
   ]
 
+let bl_promotion_graveyard =
+  [
+    init_piece "pawn" true 1 4 |> move_times 1 (3, 4);
+    init_piece "knight" true 0 6 |> move_times 1 (2, 5);
+    init_piece "bishop" true 0 5 |> move_times 1 (1, 4);
+    init_piece "rook" true 0 7 |> move_times 1 (0, 5);
+  ]
+
 (* Board Strings *)
 let sep = "\n  -------------------------\n"
 
@@ -214,6 +222,18 @@ let white_checkmate = config "test_config/white_checkmate"
 
 let black_checkmate = config "test_config/black_checkmate"
 
+let pre_promotion =
+  initial_state |> state_helper "d2" "d4" |> state_helper "e7" "e5" |> state_helper "d4" "e5"
+  |> state_helper "g8" "f6" |> state_helper "e5" "f6" |> state_helper "f8" "e7"
+  |> state_helper "a2" "a4" |> state_helper "e8" "g8" |> state_helper "f6" "e7"
+  |> state_helper "a7" "a5"
+
+let promotion_state = config "test_config/white_promotion"
+
+let after_promote = promotion_state |> promotion_piece (init_piece "queen" false 0 5)
+
+let after_promote_knight = promotion_state |> promotion_piece (init_piece "knight" false 0 5)
+
 (* Boards/Board Setups *)
 
 let fst_board = move (6, 4) (4, 4) None initial_board |> fst
@@ -226,12 +246,6 @@ let double_check = board double_state
 
 let move_into_check =
   initial_board |> move_helper "c2" "c4" |> move_helper "c7" "c5" |> move_helper "d1" "a4"
-
-let promote_into_check =
-  initial_board |> move_helper "d2" "d4" |> move_helper "e7" "e5" |> move_helper "d4" "e5"
-  |> move_helper "g8" "f6" |> move_helper "e5" "f6" |> move_helper "f8" "e7"
-  |> move_helper "a2" "a4" |> move_helper "e8" "g8" |> move_helper "f6" "e7"
-  |> move_helper "a7" "a5" |> move_helper "e7" "f8"
 
 let en_passant_check = board en_passant_into_check
 
@@ -250,6 +264,10 @@ let cannot_check_castle = board check_castle
 let cannot_into_check_castle = board move_into_check_castle
 
 let check_square_castle = board move_thru_check_castle
+
+let promote_into_check = board after_promote
+
+let promote_not_into_check = board after_promote_knight
 
 (* Other Values *)
 let empty_space = "         "

@@ -11,6 +11,12 @@ type command =
   | Draw
   | Score
 
+type promotion_pieces =
+  | Knight
+  | Rook
+  | Queen
+  | Bishop
+
 let format str = str |> String.trim |> String.lowercase_ascii
 
 let char_in_range = function
@@ -50,3 +56,20 @@ let parse str =
             else Move (pos_of_str a, pos_of_str b)
         | _ -> raise Malformed
       else raise Malformed
+
+let promotion_parse str =
+  let formatted_str = format str in
+  match formatted_str with
+  | "1"
+  | "queen" ->
+      Queen
+  | "2"
+  | "rook" ->
+      Rook
+  | "3"
+  | "knight" ->
+      Knight
+  | "4"
+  | "bishop" ->
+      Bishop
+  | _ -> raise Malformed
