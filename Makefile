@@ -20,10 +20,11 @@ state_test:
 
 
 test:
-	OCAMLRUNPARAM=b dune exec test/command_test.exe
-	OCAMLRUNPARAM=b dune exec test/piece_test.exe
-	OCAMLRUNPARAM=b dune exec test/board_test.exe
-	OCAMLRUNPARAM=b dune exec test/state_test.exe
+	OCAMLRUNPARAM=b dune exec test/main.exe
+	# OCAMLRUNPARAM=b dune exec test/command_test.exe
+	# OCAMLRUNPARAM=b dune exec test/piece_test.exe
+	# OCAMLRUNPARAM=b dune exec test/board_test.exe
+	# OCAMLRUNPARAM=b dune exec test/state_test.exe
 
 play:
 	OCAMLRUNPARAM=b dune exec bin/main.exe
@@ -31,7 +32,7 @@ play:
 clean:
 	dune clean
 	
-doc:
+docs:
 	dune build @doc
 
 zip:

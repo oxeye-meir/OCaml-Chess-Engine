@@ -64,6 +64,7 @@ let checkmate_tests =
     checkmate_test "Scholar's checkmate is in a checkmate state" scholar_state true;
     checkmate_test "Double check is not a checkmate state" double_state false;
     checkmate_test "Black checkmate is in a checkmate state" bl_checkmate true;
+    checkmate_test "White checkmate is in a checkmate state" white_checkmate true;
     checkmate_test "Being able to capture out of mate is not a checkmate state"
       capture_out_of_mate false;
     checkmate_test "Stalemate is not a checkmate state" stalemate_state false;
@@ -76,11 +77,22 @@ let stalemate_tests =
     stalemate_test "Initial board is not a stalemate state" init_state false;
     stalemate_test "Scholar's checkmate is not a stalemate state" scholar_state false;
     stalemate_test "Double check is not a stalemate state" double_state false;
+    stalemate_test "White checkmate is not a stalemate state" white_checkmate false;
     stalemate_test "Black checkmate is not a stalemate state" bl_checkmate false;
     stalemate_test "Stalemate state is a stalemate" stalemate_state true;
     stalemate_test "not stalemate state is not a stalemate" not_stalemate_state false;
     stalemate_test "Pre-promotion is not a stalemate state" pre_promotion false;
     stalemate_test "Promoting into a queen is not a stalemate state" promotion_state false;
+  ]
+
+let exn_tests =
+  [
+    ( "Promoting on a non-promotion state raises IllegalPromotion" >:: fun _ ->
+      assert_raises IllegalPromotion (fun () -> promotion_piece bl_queen initial_state) );
+    ( "Undoing on the initial state raises NoUndo" >:: fun _ ->
+      assert_raises NoUndo (fun () -> undo initial_state) );
+    ( "Moving on the wrong color's turn raises WrongColor" >:: fun _ ->
+      assert_raises WrongColor (fun () -> change_state (1, 0) (3, 0) initial_state) );
   ]
 
 let graveyard_tests =
@@ -114,6 +126,12 @@ let score_tests =
     score_test "White score after checkmate is 1001" white_checkmate false 1001;
     score_test "Black score after stalemate is 39" stalemate_state true 39;
     score_test "White score after stalemate is 5" stalemate_state false 5;
+    score_test "White score during promotion is 12" promotion_state false 12;
+    score_test "Black score during promotion is 0" promotion_state true 0;
+    score_test "White score after promotion is still 12" after_promote false 12;
+    score_test "White score after promotion to knight is still 12" after_promote_knight false
+      12;
+    score_test "Black score after promotion to knight is still 0" after_promote_knight true 0;
   ]
 
 let suite =
@@ -126,6 +144,19 @@ let suite =
            stalemate_tests;
            graveyard_tests;
            score_tests;
+           exn_tests;
          ]
+
+let tests =
+  List.flatten
+    [
+      turn_tests;
+      result_tests;
+      checkmate_tests;
+      stalemate_tests;
+      graveyard_tests;
+      score_tests;
+      exn_tests;
+    ]
 
 let _ = run_test_tt_main suite

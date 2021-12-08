@@ -8,6 +8,10 @@ let parse_test (name : string) (str : string) (expected_output : command) : test
 let parse_excep_test (name : string) (str : string) (e : exn) : test =
   name >:: fun _ -> assert_raises e (fun () -> parse str)
 
+let promotion_parse_test (name : string) (str : string) (expected_output : promotion_pieces) :
+    test =
+  name >:: fun _ -> assert_equal expected_output (promotion_parse str)
+
 let parse_tests =
   [
     parse_test "Input reset shoud parse to Reset" "reset" Reset;
@@ -22,6 +26,7 @@ let parse_tests =
     parse_test "Input scOre should parse to Draw" "scOre" Score;
     parse_test "Input Score should parse to Draw" "Score" Score;
     parse_test "Input a3 c6 should parse to Move (5,0) (2,2)" "a3 c6" (Move ((5, 0), (2, 2)));
+    parse_test "Input A3 C6 should parse to Move (5,0) (2,2)" "A3 C6" (Move ((5, 0), (2, 2)));
     parse_test "Input a1 h7 should parse to Move (7,0) (1,7)" "a1 h7" (Move ((7, 0), (1, 7)));
     parse_test "input \"a3         c6\" should parse to Move (5,0) (2,2)"
       ("a3" ^ empty_space ^ "c6")
@@ -49,8 +54,25 @@ let parse_excep_tests =
     parse_excep_test "An input of quite should raise Malformed" "quite" Malformed;
     parse_excep_test "An input of a5 c10 should raise Malformed" "a5 c10" Malformed;
     parse_excep_test "An input of a7 should raise Malformed" "a7" Malformed;
+    parse_excep_test "An input of a 7 a 5 should raise Malformed" "a 7 a 5" Malformed;
   ]
 
-let suite = "test suite for Command" >::: List.flatten [ parse_tests; parse_excep_tests ]
+let promotion_parse_tests =
+  [
+    promotion_parse_test "1 -> Queen" " 1    " Queen;
+    promotion_parse_test "queen -> Queen" " queen    " Queen;
+    promotion_parse_test "2 -> Rook" " 2    " Rook;
+    promotion_parse_test "rook -> Rook" " rOok   " Rook;
+    promotion_parse_test "3 -> Knight" " 3    " Knight;
+    promotion_parse_test "knight -> Knight" " kNIght    " Knight;
+    promotion_parse_test "4 -> Bishop" " 4    " Bishop;
+    promotion_parse_test "bishop -> Bishop" " BiShop    " Bishop;
+  ]
+
+let suite =
+  "test suite for Command"
+  >::: List.flatten [ parse_tests; parse_excep_tests; promotion_parse_tests ]
+
+let tests = List.flatten [ parse_tests; parse_excep_tests; promotion_parse_tests ]
 
 let _ = run_test_tt_main suite

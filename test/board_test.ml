@@ -1,5 +1,6 @@
 open OUnit2
 open Chess.Board
+open Chess.Piece
 open Helper
 open Values
 
@@ -30,6 +31,16 @@ let piece_at_tests =
   [
     piece_at_test "the piece at (7, 6) after white castles short is a king" castled_wh_king
       wh_sh_castle_board (7, 6);
+    piece_at_test "the piece at (0, 6) after black castles short is a king" castled_bl_king
+      bl_sh_castle_board (0, 6);
+    piece_at_test "the piece at (7, 2) after white castles long is a king" long_castled_wh_king
+      wh_lg_castle_board (7, 2);
+    piece_at_test "the piece at (0, 2) after black castles long is a king" long_castled_bl_king
+      bl_lg_castle_board (0, 2);
+    piece_at_test "the piece at (0, 5) after white promotes to a queen is a white queen"
+      (init_piece "queen" false 0 5) promote_into_check (0, 5);
+    piece_at_test "the piece at (0, 5) after white promotes to a knight is a white knight"
+      (init_piece "knight" false 0 5) promote_not_into_check (0, 5);
     piece_at_test "the piece at (0, 6) after black castles short is a king" castled_bl_king
       bl_sh_castle_board (0, 6);
     piece_at_test "the piece at (7, 2) after white castles long is a king" long_castled_wh_king
@@ -74,6 +85,7 @@ let invalidpos_tests =
       (7, 6);
     invalidpos_test "Cannot move through a check square while castling" check_square_castle
       (7, 4) (7, 6);
+    invalidpos_test "Cannot ignore a checking piece" promote_into_check (0, 6) (0, 7);
   ]
 
 let check_tests =
@@ -108,5 +120,16 @@ let suite =
            check_tests;
            to_string_tests;
          ]
+
+let tests =
+  List.flatten
+    [
+      piece_at_tests;
+      get_color_pieces_tests;
+      next_moves_tests;
+      invalidpos_tests;
+      check_tests;
+      to_string_tests;
+    ]
 
 let _ = run_test_tt_main suite
