@@ -234,7 +234,7 @@ let en_passant_helper (x1, y1) (x2, y2) prev_pawn_pos enemy_pawn_pos piece board
         (board
         |> replace_piece (init_piece "empty" false x1 y1) x1 y1
         |> replace_piece pawn_moved x2 y2),
-      piece_at board enemy_pawn_pos )
+      piece_at board (prev_pawn_pos) )
   else regular_move (x1, y1) (x2, y2) piece board enemies
 
 let enemy_pieces color board = if color then white_pieces board else black_pieces board

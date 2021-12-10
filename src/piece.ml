@@ -34,7 +34,7 @@ let pattern_helper f = function
   | Empty t -> f t
 
 let init_piece name color x y =
-  match name with
+  match String.lowercase_ascii name with
   | "pawn" ->
       let piece_name = if color then "♟︎" else "♙" in
       Pawn { name = piece_name; moves = 0; color; x; y; value = 1 }
@@ -189,8 +189,7 @@ let valid_moves = function
   | King t -> List.filter valid_pos (valid_king_moves t)
   | _ -> raise EmptySquare
 
-let move_piece (x, y) piece =
-  match piece with
+let move_piece (x, y) = function
   | Pawn t -> Pawn { t with moves = t.moves + 1; x; y }
   | Knight t -> Knight { t with moves = t.moves + 1; x; y }
   | Rook t -> Rook { t with moves = t.moves + 1; x; y }
@@ -198,25 +197,3 @@ let move_piece (x, y) piece =
   | King t -> King { t with moves = t.moves + 1; x; y }
   | Queen t -> Queen { t with moves = t.moves + 1; x; y }
   | Empty t -> Empty { t with moves = t.moves + 1; x; y }
-
-let to_string piece =
-  match piece with
-  | Pawn t ->
-      "Pawn " ^ string_of_bool t.color ^ " (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y
-      ^ ")"
-  | King t ->
-      "King " ^ string_of_bool t.color ^ " (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y
-      ^ ")"
-  | Knight t ->
-      "Knight " ^ string_of_bool t.color ^ " (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y
-      ^ ")"
-  | Rook t ->
-      "Rook " ^ string_of_bool t.color ^ " (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y
-      ^ ")"
-  | Queen t ->
-      "Queen " ^ string_of_bool t.color ^ " (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y
-      ^ ")"
-  | Bishop t ->
-      "Bishop " ^ string_of_bool t.color ^ " (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y
-      ^ ")"
-  | Empty t -> "Empty (" ^ string_of_int t.x ^ ", " ^ string_of_int t.y ^ ")"

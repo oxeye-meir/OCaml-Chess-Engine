@@ -1,4 +1,8 @@
-(** The type representing the result of a chess game. *)
+(** The type representing the current mode of a state. [Playing en_passant] is the normal mode,
+    where [en_passant] represents whether an en_passant move is possible. [Promotion pos] is a
+    promotion mode where the pawn on [pos] can promote. [WhiteWin] and [BlackWin] represent a
+    win for the white or black side respectively, resulting from a checkmate. [Stalemate]
+    represents a stalemate, where one side cannot make a move but is also not in checkmate.*)
 type result =
   | Playing of ((int * int) * (int * int)) option
   | Promotion of (int * int)
@@ -7,13 +11,13 @@ type result =
   | Stalemate
 
 exception WrongColor
-(** The exception to be raised when a player tries moving the wrong color pieces. *)
+(** [WrongColor] is raised when a player tries moving the wrong color pieces. *)
 
 exception NoUndo
-(** The exception to be raised when a player tries undoing to a state that does not exist. *)
+(** [NoUndo] is raised when a player tries undoing to a state that does not exist. *)
 
 exception IllegalPromotion
-(** The exception to be raised when a player tries to promote when there is no possible
+(** [IllegalPromotion] is raised when a player tries to promote when there is no possible
     promotion, or promotes to an invalid piece. *)
 
 type t
@@ -23,35 +27,36 @@ val init_state : t
 (** [init_state] is the initial state of the game. *)
 
 val turn : t -> bool
-(** [turn s] is the current turn of the state [s].*)
+(** [turn state] is the current turn of [state].*)
 
 val board : t -> Board.t
-(** [board s] is the current board of the state [s].*)
+(** [board state] is the current board of [state].*)
 
 val result : t -> result
-(** [result s] is the result of the state [s]. *)
+(** [result state] is the result of [state]. *)
 
 val graveyard : t -> bool -> Piece.t list
-(** [graveyard s c] is the current graveyard, or all the captured pieces, of color [c] in state
-    [s]. *)
+(** [graveyard state color] is the current graveyard, or all the captured pieces, of [color]
+    player in [state]. *)
 
 val score : t -> bool -> int
-(** [score s c] is the current score of the color [c] in state [s]. *)
+(** [score state color] is the current score of the player [color] in [state]. *)
 
 val checkmate : t -> bool
-(** [checkmate s turn] is whether or not the current state [s] is in a 'checkmate' state. A
-    'checkmate' state happens when either side's [King] piece is being threatened by the
-    opposing side's piece(s) and cannot move anywhere. *)
+(** [checkmate state] is whether or not [state] is in a 'checkmate' state. A 'checkmate' state
+    happens when either side's [King] piece is being threatened by the opposing side's piece(s)
+    and has no possible moves to avoid the threat. *)
 
 val stalemate : t -> bool
-(** [stalemate s] is whether or not the current state [s] is in a 'stalemate' state. *)
+(** [stalemate state] is whether or not [state] is in a 'stalemate' state. *)
 
 val undo : t -> t
-(** [undo s] is the previous state of the current state [s]. *)
+(** [undo state] goes back to the previous state of [state]. *)
 
 val promotion_piece : Piece.t -> t -> t
-(**[promotion_piece piece state] is the new state from promoting the piece at [pos] to [piece]. *)
+(**[promotion_piece piece state] is the new state from promoting a pawn to [piece] in [state]. *)
 
 val change_state : int * int -> int * int -> t -> t
-(** [change_state curr_pos new_pos state] is the new state after moving the board of current
-    state [s]. Raises: InvalidPos if the attempted change is invalid. *)
+(** [change_state curr_pos new_pos state] is the new state after moving a piece at [curr_pos]
+    to [new_pos] on the board of [state]. Raises: [InvalidPos] if the attempted change is
+    invalid; [WrongColor] if the color of the piece being moved does not match [state]'s turn. *)

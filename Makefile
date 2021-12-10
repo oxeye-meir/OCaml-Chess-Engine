@@ -6,6 +6,9 @@ build:
 utop:
 	OCAMLRUNPARAM=b dune utop src
 
+test:
+	OCAMLRUNPARAM=b dune exec test/main.exe
+
 piece_test:
 	OCAMLRUNPARAM=b dune exec test/piece_test.exe
 
@@ -17,14 +20,6 @@ command_test:
 
 state_test:
 	OCAMLRUNPARAM=b dune exec test/state_test.exe
-
-
-test:
-	OCAMLRUNPARAM=b dune exec test/main.exe
-	# OCAMLRUNPARAM=b dune exec test/command_test.exe
-	# OCAMLRUNPARAM=b dune exec test/piece_test.exe
-	# OCAMLRUNPARAM=b dune exec test/board_test.exe
-	# OCAMLRUNPARAM=b dune exec test/state_test.exe
 
 play:
 	OCAMLRUNPARAM=b dune exec bin/main.exe

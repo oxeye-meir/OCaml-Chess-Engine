@@ -149,6 +149,20 @@ let undo state =
 let promotable piece (x, _) =
   if is_pawn piece then (color piece && x = 7) || ((not (color piece)) && x = 0) else false
 
+let checkmate_state state new_state =
+  if turn state then
+    {
+      new_state with
+      white_graveyard = init_piece "king" false 0 0 :: new_state.white_graveyard;
+      result = BlackWin;
+    }
+  else
+    {
+      new_state with
+      black_graveyard = init_piece "king" true 0 0 :: new_state.black_graveyard;
+      result = WhiteWin;
+    }
+
 let promotion_piece piece state =
   let previous_state = Some state in
   let pos =
@@ -168,24 +182,54 @@ let promotion_piece piece state =
         turn = not state.turn;
       }
     in
-    let is_checkmate = checkmate new_state in
-    if is_checkmate then
-      if turn state then
-        {
-          new_state with
-          white_graveyard = init_piece "king" false 0 0 :: new_state.white_graveyard;
-          (* This is to maintain the score += 1000 during checkmate. Can remove if we no longer
-             want that. *)
-          result = BlackWin;
-        }
-      else
-        {
-          new_state with
-          black_graveyard = init_piece "king" true 0 0 :: new_state.black_graveyard;
-          result = WhiteWin;
-        }
+    if checkmate new_state then checkmate_state state new_state
     else if stalemate new_state then { new_state with result = Stalemate }
     else new_state
+
+let promotion_state pos (previous_state, new_board, captured_piece, state) =
+  let result_promo = Promotion pos in
+  if turn state then
+    {
+      state with
+      board = new_board;
+      prev_state = previous_state;
+      result = result_promo;
+      white_graveyard =
+        (if is_empty captured_piece then state.white_graveyard
+        else captured_piece :: state.white_graveyard);
+    }
+  else
+    {
+      state with
+      board = new_board;
+      prev_state = previous_state;
+      result = result_promo;
+      black_graveyard =
+        (if is_empty captured_piece then state.black_graveyard
+        else captured_piece :: state.black_graveyard);
+    }
+
+let reg_state (previous_state, new_board, captured_piece, state) =
+  if turn state then
+    {
+      state with
+      board = new_board;
+      turn = not state.turn;
+      prev_state = previous_state;
+      white_graveyard =
+        (if is_empty captured_piece then state.white_graveyard
+        else captured_piece :: state.white_graveyard);
+    }
+  else
+    {
+      state with
+      board = new_board;
+      turn = not state.turn;
+      prev_state = previous_state;
+      black_graveyard =
+        (if is_empty captured_piece then state.black_graveyard
+        else captured_piece :: state.black_graveyard);
+    }
 
 let change_state pos1 pos2 state =
   let previous_state = Some state in
@@ -199,66 +243,11 @@ let change_state pos1 pos2 state =
   if turn state <> color curr_piece then raise WrongColor
   else
     let new_board, captured_piece = Board.move pos1 pos2 currently_en_passant curr_board in
+    let key_args = (previous_state, new_board, captured_piece, state) in
     let new_state =
-      if promotable curr_piece pos2 then
-        let result_promotion = Promotion pos2 in
-        if turn state then
-          {
-            state with
-            board = new_board;
-            prev_state = previous_state;
-            result = result_promotion;
-            white_graveyard =
-              (if is_empty captured_piece then state.white_graveyard
-              else captured_piece :: state.white_graveyard);
-          }
-        else
-          {
-            state with
-            board = new_board;
-            prev_state = previous_state;
-            result = result_promotion;
-            black_graveyard =
-              (if is_empty captured_piece then state.black_graveyard
-              else captured_piece :: state.black_graveyard);
-          }
-      else if turn state then
-        {
-          state with
-          board = new_board;
-          turn = not state.turn;
-          prev_state = previous_state;
-          white_graveyard =
-            (if is_empty captured_piece then state.white_graveyard
-            else captured_piece :: state.white_graveyard);
-        }
-      else
-        {
-          state with
-          board = new_board;
-          turn = not state.turn;
-          prev_state = previous_state;
-          black_graveyard =
-            (if is_empty captured_piece then state.black_graveyard
-            else captured_piece :: state.black_graveyard);
-        }
+      if promotable curr_piece pos2 then promotion_state pos2 key_args else reg_state key_args
     in
-    let is_checkmate = checkmate new_state in
-    if is_checkmate then
-      if turn state then
-        {
-          new_state with
-          white_graveyard = init_piece "king" false 0 0 :: new_state.white_graveyard;
-          (* This is to maintain the score += 1000 during checkmate. Can remove if we no longer
-             want that. *)
-          result = BlackWin;
-        }
-      else
-        {
-          new_state with
-          black_graveyard = init_piece "king" true 0 0 :: new_state.black_graveyard;
-          result = WhiteWin;
-        }
+    if checkmate new_state then checkmate_state state new_state
     else if stalemate new_state then { new_state with result = Stalemate }
     else if new_state.result = Promotion pos2 then new_state
     else
@@ -266,6 +255,3 @@ let change_state pos1 pos2 state =
       match en_passant_enemy with
       | Some enemy_pos -> { new_state with result = Playing (Some (pos2, enemy_pos)) }
       | None -> { new_state with result = Playing None }
-
-let rec pawns color x y lst =
-  if y >= 0 then pawns color x (y - 1) (init_piece "pawn" color x y :: lst) else lst

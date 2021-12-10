@@ -5,9 +5,11 @@ type position = int * int
 (** The type [position] represents a position on the board (x,y) where x and y are both integer
     in the range 0-7 inclusive. *)
 
-(** The type [command] is a player's command which is then parsed into either the [Reset]
-    command that resets the game, the [Quit] command, or the [Move] command, which represents
-    the start and end position that a player wants to move. *)
+(** The type [command] is a player's command which is then parsed into [Reset] for resetting
+    the game, [Quit] for quitting the game, [Help] for accessing help menu, [Undo] for undoing
+    the last move, [Draw] to offer the opponent a draw, [Score] to check the current score, or
+    [Move pos1 pos2], which represents the start and end position that a player wants to move a
+    piece to. *)
 type command =
   | Move of position * position
   | Reset
@@ -17,6 +19,8 @@ type command =
   | Draw
   | Score
 
+(** The type [promotion_pieces] represents all the possible pieces that can be promoted to. All
+    the possible promotion pieces are [Knight], [Rook], [Queen], and [Bishop]. *)
 type promotion_pieces =
   | Knight
   | Rook
@@ -40,7 +44,10 @@ val parse : string -> command
     character code 32; not tabs or newlines, etc.).
 
     Raises: [Malformed] if [str] is malformed. An input string is malformed if it is empty
-    after being trimmed, it is not some form of "quit" or "reset", or it is not 2 valid Chess
-    coordinates.*)
+    after being trimmed or one of the valid commands. *)
 
 val promotion_parse : string -> promotion_pieces
+(** [promotion_parse str] is parses a promotion command [str] into one of the possible
+    [promotion_pieces]. Raises: [Malformed] if [str] is malformed. An input string is malformed
+    if it is not a valid piece to promote to or a string does not parse properly into a chess
+    piece. *)

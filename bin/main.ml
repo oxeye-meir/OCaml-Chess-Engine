@@ -36,18 +36,13 @@ let print_rules () =
   |> ignore
 
 let print_help () =
-  Lwt_io.printl
+  Lwt_io.print
     "Notation: each square on the board is referred to by a letter and a number. The letter \n\
     \  represents the column, while the number represents the row. Example: the third square \n\
     \  of the second row is notated as c7. \n\n\
      The black pieces are located on rows 7 and 8, while the white pieces are located on \n\
      rows 1 and 2.\n\n\
-     Rules for Piece Movement "
-  |> ignore;
-
-  Lwt_io.print "(Credit to ichess.net)" |> ignore;
-  Lwt_io.print
-    ":\n\
+     Rules for Piece Movement (Credit to ichess.net):\n\
      Kings move one square in any direction, so long as that square is not attacked by an \n\
     \  enemy piece. Additionally, kings are able to make a special move, known as castling.\n\n\
      Queens move diagonally, horizontally, or vertically any number of squares. They are \n\
@@ -66,12 +61,15 @@ let print_help () =
     \  can make a special move named En Passant.\n\n"
   |> ignore
 
-let print_invalid_move () = Lwt_io.printl "Invalid move. Please try again! \n" |> ignore
+let print_invalid_move () = Lwt_io.print "Invalid move. Please try again! \n" |> ignore
+
+let print_illegal_promotion () =
+  Lwt_io.print "Invalid promotion. Please try again! \n" |> ignore
 
 let print_wrong_color () =
-  Lwt_io.printl "That piece is not your color. Please try again! \n" |> ignore
+  Lwt_io.print "That piece is not your color. Please try again! \n" |> ignore
 
-let print_invalid_text () = Lwt_io.printl "Invalid text. Please try again! \n" |> ignore
+let print_invalid_text () = Lwt_io.print "Invalid text. Please try again! \n" |> ignore
 
 let print_error error =
   match error with
@@ -80,12 +78,12 @@ let print_error error =
   | InvalidText -> print_invalid_text ()
   | _ -> ()
 
-let print_reset () = Lwt_io.printl "You have restarted your game! \n" |> ignore
+let print_reset () = Lwt_io.print "You have restarted your game! \n" |> ignore
 
-let print_check () = Lwt_io.printl "Check! \n" |> ignore
+let print_check () = Lwt_io.print "Check! \n" |> ignore
 
 let print_check_mate result () =
-  Lwt_io.printl
+  Lwt_io.print
     (match result with
     | WhiteWin -> "Checkmate! White wins! \n"
     | BlackWin -> "Checkmate! Black wins! \n"
@@ -94,7 +92,7 @@ let print_check_mate result () =
   exit 0
 
 let print_stalemate () =
-  Lwt_io.printl "Stalemate! \n" |> ignore;
+  Lwt_io.print "Stalemate! \n" |> ignore;
   exit 0
 
 let print_file_error () =
@@ -118,7 +116,28 @@ let print_draw_accept color =
 let print_draw_deny color =
   Lwt_io.printf "%s denied the draw. The game will continue. \n" color |> Lwt_main.run
 
-let print_board state = state |> State.board |> to_string |> Lwt_io.printl |> Lwt_main.run
+let rec graveyard_to_list acc = function
+  | [] -> acc
+  | h :: t -> (
+      match List.assoc_opt h acc with
+      | None -> graveyard_to_list ((h, 1) :: acc) t
+      | Some v -> graveyard_to_list ((h, v + 1) :: List.remove_assoc h acc) t)
+
+let format_graveyard color state =
+  color |> graveyard state |> List.map name |> graveyard_to_list []
+  |> List.sort (fun (name1, _) (name2, _) -> -1 * String.compare name1 name2)
+
+let rec graveyard_to_str acc = function
+  | [] -> acc
+  | [ (name, num) ] -> Printf.sprintf "%s %sx%i" acc name num
+  | (name, num) :: t -> graveyard_to_str (Printf.sprintf "%s %sx%i;" acc name num) t
+
+let print_board state =
+  let white_gy_str = format_graveyard false state |> graveyard_to_str "  " in
+  let black_gy_str = format_graveyard true state |> graveyard_to_str "  " in
+  let board_str = state |> State.board |> to_string in
+  Printf.sprintf "%s\n%s%s\n" black_gy_str board_str white_gy_str
+  |> Lwt_io.print |> Lwt_main.run
 
 let print_scores state =
   let black_score = true |> State.score state |> string_of_int in
@@ -127,7 +146,7 @@ let print_scores state =
   Lwt_io.printf "Black: %s \n" black_score |> ignore
 
 let print_promotion () =
-  Lwt_io.printl
+  Lwt_io.print
     "Promote to (enter number or name):\n1) Queen\n2) Rook\n3) Knight\n4) Bishop\n> "
   |> ignore
 
@@ -137,30 +156,25 @@ let rec prompt_time () =
      or untimed/casual for no time. \n\
      > "
   |> ignore;
-  match Lwt_io.(read_line stdin) |> Lwt_main.run with
-  | exception End_of_file ->
+  let s = Lwt_io.(read_line stdin) |> Lwt_main.run |> String.lowercase_ascii in
+  try
+    let time_control = float_of_string s in
+    if time_control < 5. || time_control > 60. then (
       print_invalid_time ();
-      prompt_time ()
-  | s -> begin
-      try
-        let time_control = float_of_string s in
-        if time_control < 0.1 || time_control > 60. then (
-          print_invalid_time ();
-          prompt_time ())
-        else
-          let seconds = time_control *. 60. in
-          Some (seconds, seconds)
-      with
-      | _ ->
-          let formatted_str = String.lowercase_ascii s in
-          if formatted_str = "quit" then (
-            print_quit ();
-            exit 0)
-          else if formatted_str = "untimed" || formatted_str = "casual" then None
-          else (
-            print_invalid_time ();
-            prompt_time ())
-    end
+      prompt_time ())
+    else
+      let seconds = time_control *. 60. in
+      Some (seconds, seconds)
+  with
+  | _ ->
+      let formatted_str = String.lowercase_ascii s in
+      if formatted_str = "quit" then (
+        print_quit ();
+        exit 0)
+      else if formatted_str = "untimed" || formatted_str = "casual" then None
+      else (
+        print_invalid_time ();
+        prompt_time ())
 
 let initial_state = Chess.State.init_state
 
@@ -207,21 +221,34 @@ let pre_input_printing state error times score =
   | Some (bl_times, wh_times) ->
       if bl_times <= 0.0 then print_time_over true
       else if wh_times <= 0.0 then print_time_over false
-      else ();
-      print_board state;
+      else print_board state;
       print_time_left (wh_times |> mm_ss_string) (bl_times |> mm_ss_string);
       helper_printing state error score
   | None ->
       print_board state;
       helper_printing state error score
 
-let rec promotion_input pos (times : (float * float) option) state error =
+let promotion_helper (x, y) times state = function
+  | "quit" ->
+      quit_helper state;
+      exit 0
+  | "undo" -> (times, undo_command state)
+  | "reset" ->
+      print_reset ();
+      (times, initial_state)
+  | input -> (
+      match promotion_parse input with
+      | Knight -> (times, promotion_piece (init_piece "knight" (turn state) x y) state)
+      | Rook -> (times, promotion_piece (init_piece "rook" (turn state) x y) state)
+      | Queen -> (times, promotion_piece (init_piece "queen" (turn state) x y) state)
+      | Bishop -> (times, promotion_piece (init_piece "bishop" (turn state) x y) state))
+
+let rec promotion_input pos times state error =
   print_board state;
-  if error then print_invalid_move ();
+  if error then print_illegal_promotion ();
   print_promotion ();
-  let x, y = pos in
   let start_time = gettimeofday () in
-  let input = read_line () in
+  let input = Lwt_io.(read_line stdin) |> Lwt_main.run in
   let difference = gettimeofday () -. start_time in
   let new_times =
     match times with
@@ -230,16 +257,32 @@ let rec promotion_input pos (times : (float * float) option) state error =
         else Some (bl_times, wh_times -. difference)
     | None -> None
   in
-  try
-    match promotion_parse input with
-    | Knight -> (new_times, promotion_piece (init_piece "knight" (turn state) x y) state)
-    | Rook -> (new_times, promotion_piece (init_piece "rook" (turn state) x y) state)
-    | Queen -> (new_times, promotion_piece (init_piece "queen" (turn state) x y) state)
-    | Bishop -> (new_times, promotion_piece (init_piece "bishop" (turn state) x y) state)
-  with
+  try promotion_helper pos new_times state input with
   | IllegalPromotion
   | Malformed ->
       promotion_input pos new_times state true
+
+let input_helper (bl_times, wh_times) state =
+  let start_time = gettimeofday () in
+  let input = Lwt_io.(read_line stdin) >>= fun s -> Lwt.return (Some s) in
+  let timeout =
+    Lwt_unix.sleep (if turn state then bl_times else wh_times) >>= fun () -> Lwt.return None
+  in
+  let str =
+    match Lwt_main.run (Lwt.pick [ input; timeout ]) with
+    | Some s -> s
+    | None -> print_time_over (turn state)
+  in
+  let difference = gettimeofday () -. start_time in
+  let new_times =
+    if turn state then Some (bl_times -. difference, wh_times)
+    else Some (bl_times, wh_times -. difference)
+  in
+  let command =
+    try parse str with
+    | Malformed -> Move ((-1, -1), (-1, -1))
+  in
+  (command, new_times)
 
 let rec get_current_board state error times score =
   match result state with
@@ -250,26 +293,7 @@ let rec get_current_board state error times score =
       pre_input_printing state error times score;
       match times with
       | Some (bl_times, wh_times) ->
-          let start_time = gettimeofday () in
-          let input = Lwt_io.(read_line stdin) >>= fun s -> Lwt.return (Some s) in
-          let timeout =
-            Lwt_unix.sleep (if turn state then bl_times else wh_times) >>= fun () ->
-            Lwt.return None
-          in
-          let user_str =
-            match Lwt_main.run (Lwt.pick [ input; timeout ]) with
-            | Some s -> s
-            | None -> print_time_over (turn state)
-          in
-          let command =
-            try parse user_str with
-            | Malformed -> Move ((-1, -1), (-1, -1))
-          in
-          let difference = gettimeofday () -. start_time in
-          let new_times =
-            if turn state then Some (bl_times -. difference, wh_times)
-            else Some (bl_times, wh_times -. difference)
-          in
+          let command, new_times = input_helper (bl_times, wh_times) state in
           let next_state = command_helper state new_times error command in
           get_current_board next_state NoError new_times false
       | None ->
@@ -301,21 +325,38 @@ and command_helper state times error = function
 
 and draw_helper state times error =
   print_draw_offer (if turn state then "Black" else "White");
-  match Lwt_io.(read_line stdin) |> Lwt_main.run with
-  | exception End_of_file -> get_current_board state InvalidText times false
-  | str -> begin
-      let formatted_str = String.lowercase_ascii str in
-      match formatted_str with
-      | "yes"
-      | "draw"
-      | "accept" ->
-          print_draw_accept (if turn state then "White" else "Black")
-      | "no"
-      | "deny" ->
-          print_draw_deny (if turn state then "White" else "Black");
-          state
-      | _ -> get_current_board state error times false
-    end
+  let formatted_str = Lwt_io.(read_line stdin) |> Lwt_main.run |> String.lowercase_ascii in
+  match formatted_str with
+  | "yes"
+  | "draw"
+  | "accept" ->
+      print_draw_accept (if turn state then "White" else "Black")
+  | "no"
+  | "deny" ->
+      print_draw_deny (if turn state then "White" else "Black");
+      state
+  | _ ->
+      Lwt_io.print "Invalid input. Please try again.\n" |> ignore;
+      draw_helper state times error
+
+let file_helper file_name =
+  let print_line_error line = Lwt_io.printf "Error on line %i: " line |> ignore in
+  try Fileutil.config file_name with
+  | InvalidText line ->
+      print_line_error line;
+      print_invalid_text ()
+  | InvalidPos line ->
+      print_line_error line;
+      print_invalid_move ();
+      exit 0
+  | WrongColor line ->
+      print_line_error line;
+      print_wrong_color ();
+      exit 0
+  | InvalidPromotion line ->
+      print_line_error line;
+      print_illegal_promotion ();
+      exit 0
 
 let rec start_from_file () =
   Lwt_io.print "> " |> ignore;
@@ -329,21 +370,7 @@ let rec start_from_file () =
           print_quit ();
           exit 0
       | _ ->
-          let print_line_error line = Lwt_io.printf "Error on line %i: " line |> ignore in
-          let state =
-            try Fileutil.config file_name with
-            | InvalidText line ->
-                print_line_error line;
-                print_invalid_text ()
-            | InvalidPos line ->
-                print_line_error line;
-                print_invalid_move ();
-                exit 0
-            | WrongColor line ->
-                print_line_error line;
-                print_wrong_color ();
-                exit 0
-          in
+          let state = file_helper file_name in
           get_current_board state NoError (prompt_time ()) false |> print_board)
 
 (** [main first_print] prompts for the game to play, then starts it. If [first_print] is true,
