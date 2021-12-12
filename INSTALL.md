@@ -1,3 +1,5 @@
+# Installation Instructions #
+
 To run our Chess game, navigate to the project's root directory. 
 Please make sure that your terminal is set to light/white mode so that the 
 Chess pieces display with proper colors. Then, you can call "sh chess.sh" 
