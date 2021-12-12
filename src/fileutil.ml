@@ -43,7 +43,10 @@ let rec go_thru_state state line = function
       go_thru_state new_state (line + 1) t
 
 let rec read_each_line channel acc =
-  try read_each_line channel ((input_line channel |> String.lowercase_ascii) :: acc) with
+  try
+    read_each_line channel
+      ((input_line channel |> String.lowercase_ascii) :: acc)
+  with
   | End_of_file ->
       close_in channel;
       acc

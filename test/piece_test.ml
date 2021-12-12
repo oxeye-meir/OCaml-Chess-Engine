@@ -4,28 +4,35 @@ open Values
 open Helper
 
 let position_test name expected_output piece =
-  name >:: fun _ -> assert_equal expected_output (position piece) ~printer:position_printer
+  name >:: fun _ ->
+  assert_equal expected_output (position piece) ~printer:position_printer
 
 let name_test test_name expected_output piece =
   test_name >:: fun _ -> assert_equal expected_output (name piece) ~printer:id
 
 let value_test name expected_output piece =
-  name >:: fun _ -> assert_equal expected_output (value piece) ~printer:string_of_int
+  name >:: fun _ ->
+  assert_equal expected_output (value piece) ~printer:string_of_int
 
 let is_king_test name expected_output piece =
-  name >:: fun _ -> assert_equal expected_output (is_king piece) ~printer:string_of_bool
+  name >:: fun _ ->
+  assert_equal expected_output (is_king piece) ~printer:string_of_bool
 
 let is_pawn_test name expected_output piece =
-  name >:: fun _ -> assert_equal expected_output (is_pawn piece) ~printer:string_of_bool
+  name >:: fun _ ->
+  assert_equal expected_output (is_pawn piece) ~printer:string_of_bool
 
 let moves_test name expected_output piece =
-  name >:: fun _ -> assert_equal expected_output (moves piece) ~printer:string_of_int
+  name >:: fun _ ->
+  assert_equal expected_output (moves piece) ~printer:string_of_int
 
 let color_test name expected_output piece =
-  name >:: fun _ -> assert_equal expected_output (color piece) ~printer:string_of_bool
+  name >:: fun _ ->
+  assert_equal expected_output (color piece) ~printer:string_of_bool
 
 let is_empty_test name expected_output piece =
-  name >:: fun _ -> assert_equal expected_output (is_empty piece) ~printer:string_of_bool
+  name >:: fun _ ->
+  assert_equal expected_output (is_empty piece) ~printer:string_of_bool
 
 let valid_moves_test name expected_output piece =
   name >:: fun _ ->
@@ -37,9 +44,12 @@ let position_tests =
     position_test "position of black pawn is (1,0)" (1, 0) bl_pawn;
     position_test "position of empty square is (2,5)" (2, 5) empty_sq;
     position_test "position of moved pawn is (3,0)" (3, 0) moved_pawn;
-    position_test "position of castled white king is (7,6)" (7, 6) castled_wh_king;
-    position_test "position of castled black king is (0,6)" (0, 6) castled_bl_king;
-    position_test "moving a pawn in-place 5 times has a position of (3,0)" (3, 0) moved_5_times;
+    position_test "position of castled white king is (7,6)" (7, 6)
+      castled_wh_king;
+    position_test "position of castled black king is (0,6)" (0, 6)
+      castled_bl_king;
+    position_test "moving a pawn in-place 5 times has a position of (3,0)"
+      (3, 0) moved_5_times;
   ]
 
 let name_tests =
@@ -151,13 +161,16 @@ let color_tests =
     color_test "color of white pawn is false (white)" false wh_pawn;
     color_test "color of white rook is false (white)" false wh_rook;
     color_test "color of black king is true (black)" true bl_king;
-    color_test "color of white knight is false (white)" false initial_wh_knight_L;
-    color_test "color of white knight is false (white)" false initial_wh_knight_R;
+    color_test "color of white knight is false (white)" false
+      initial_wh_knight_L;
+    color_test "color of white knight is false (white)" false
+      initial_wh_knight_R;
     color_test "color of white king is false (white)" false castled_wh_king;
     color_test "color of black king is true (black)" true castled_bl_king;
     color_test "color of black king is true (black)" true long_castled_bl_king;
     color_test "color of white king is false (white)" false long_castled_wh_king;
-    color_test "color of white knight is false (white)" false initial_wh_knight_L;
+    color_test "color of white knight is false (white)" false
+      initial_wh_knight_L;
     color_test "color of white king is false (white)" false checkmated_wh_king;
     color_test "color of black king is true (black)" true checkmated_bl_king;
     color_test "color of black pawn is true (black)" true kingside_bl_pawn;
@@ -192,12 +205,13 @@ let valid_moves_tests =
       [ (2, 0); (3, 0); (2, 1) ] bl_pawn;
     valid_moves_test "valid move of white pawn is [(5, 0); (4,0); (5,1)] "
       [ (5, 0); (4, 0); (5, 1) ] wh_pawn;
-    valid_moves_test "valid move of king is [(1,3);(1,4);(1,5);(2,3);(2,5);(3,3);(3,4);(3,5)]"
+    valid_moves_test
+      "valid move of king is [(1,3);(1,4);(1,5);(2,3);(2,5);(3,3);(3,4);(3,5)]"
       [ (1, 3); (1, 4); (1, 5); (2, 3); (2, 5); (3, 3); (3, 4); (3, 5) ]
       bl_king;
     valid_moves_test
-      "valid moves of rook is [ (1, 0); (2, 0); (3, 0); (4, 0); (5, 0); (6, 0); (7,0); (0, \
-       1); (0, 2); (0, 3); (0, 4); (0, 5); (0, 6); (0, 7)]"
+      "valid moves of rook is [ (1, 0); (2, 0); (3, 0); (4, 0); (5, 0); (6, \
+       0); (7,0); (0, 1); (0, 2); (0, 3); (0, 4); (0, 5); (0, 6); (0, 7)]"
       [
         (1, 0);
         (2, 0);
@@ -215,9 +229,10 @@ let valid_moves_tests =
         (0, 7);
       ]
       bl_rook;
-    valid_moves_test "valid moves of knight is [(2,0);(2,2); (1,3)]" [ (2, 0); (2, 2); (1, 3) ]
-      bl_knight;
-    valid_moves_test "valid moves of bishop is [(1,1);(2,0);(1,3);(2,4);(3,5);(4,6);(5,7)]"
+    valid_moves_test "valid moves of knight is [(2,0);(2,2); (1,3)]"
+      [ (2, 0); (2, 2); (1, 3) ] bl_knight;
+    valid_moves_test
+      "valid moves of bishop is [(1,1);(2,0);(1,3);(2,4);(3,5);(4,6);(5,7)]"
       [ (1, 1); (2, 0); (1, 3); (2, 4); (3, 5); (4, 6); (5, 7) ]
       bl_bishop;
     valid_moves_test

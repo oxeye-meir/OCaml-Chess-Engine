@@ -22,8 +22,8 @@ type t =
   | King of piece_info
   | Empty of piece_info
 
-(** [pattern_helper f piece] is the result of applying function [f] on [piece] by
-    pattern-matching [piece] against the possible pieces. *)
+(** [pattern_helper f piece] is the result of applying function [f] on [piece]
+    by pattern-matching [piece] against the possible pieces. *)
 let pattern_helper f = function
   | Pawn t -> f t
   | Rook t -> f t
@@ -61,7 +61,8 @@ let is_empty piece =
   | Empty _ -> true
   | _ -> false
 
-let position piece = pattern_helper (fun piece_info -> (piece_info.x, piece_info.y)) piece
+let position piece =
+  pattern_helper (fun piece_info -> (piece_info.x, piece_info.y)) piece
 
 let name piece = pattern_helper (fun piece_info -> piece_info.name) piece
 
@@ -85,22 +86,32 @@ let valid_pawn_moves (pawn : piece_info) : (int * int) list =
   let black_moves =
     List.filter
       (fun pos -> valid_pos pos)
-      [ (pawn.x + 1, pawn.y); (pawn.x + 1, pawn.y + 1); (pawn.x + 1, pawn.y - 1) ]
+      [
+        (pawn.x + 1, pawn.y); (pawn.x + 1, pawn.y + 1); (pawn.x + 1, pawn.y - 1);
+      ]
   in
   let white_moves =
     List.filter
       (fun pos -> valid_pos pos)
-      [ (pawn.x - 1, pawn.y); (pawn.x - 1, pawn.y + 1); (pawn.x - 1, pawn.y - 1) ]
+      [
+        (pawn.x - 1, pawn.y); (pawn.x - 1, pawn.y + 1); (pawn.x - 1, pawn.y - 1);
+      ]
   in
   match pawn.color with
-  | true -> if pawn.moves = 0 then (pawn.x + 2, pawn.y) :: black_moves else black_moves
-  | false -> if pawn.moves = 0 then (pawn.x - 2, pawn.y) :: white_moves else white_moves
+  | true ->
+      if pawn.moves = 0 then (pawn.x + 2, pawn.y) :: black_moves
+      else black_moves
+  | false ->
+      if pawn.moves = 0 then (pawn.x - 2, pawn.y) :: white_moves
+      else white_moves
 
 let rec rook_updown row y current_list =
-  if row <= 7 then rook_updown (row + 1) y ((row, y) :: current_list) else current_list
+  if row <= 7 then rook_updown (row + 1) y ((row, y) :: current_list)
+  else current_list
 
 let rec rook_leftright col x current_list =
-  if col <= 7 then rook_leftright (col + 1) x ((x, col) :: current_list) else current_list
+  if col <= 7 then rook_leftright (col + 1) x ((x, col) :: current_list)
+  else current_list
 
 let valid_rook_moves rook =
   let updown_list = rook_updown 0 in
@@ -132,19 +143,23 @@ let rec bishop_moves direction (x, y) current_list : (int * int) list =
   match direction mod 4 with
   | 0 ->
       if direction / 4 <= 7 then
-        (x + 1, y + 1) :: bishop_moves next_direction (x + 1, y + 1) current_list
+        (x + 1, y + 1)
+        :: bishop_moves next_direction (x + 1, y + 1) current_list
       else current_list
   | 1 ->
       if direction / 4 <= 7 then
-        (x + 1, y - 1) :: bishop_moves next_direction (x + 1, y - 1) current_list
+        (x + 1, y - 1)
+        :: bishop_moves next_direction (x + 1, y - 1) current_list
       else current_list
   | 2 ->
       if direction / 4 <= 7 then
-        (x - 1, y + 1) :: bishop_moves next_direction (x - 1, y + 1) current_list
+        (x - 1, y + 1)
+        :: bishop_moves next_direction (x - 1, y + 1) current_list
       else current_list
   | _ ->
       if direction / 4 <= 7 then
-        (x - 1, y - 1) :: bishop_moves next_direction (x - 1, y - 1) current_list
+        (x - 1, y - 1)
+        :: bishop_moves next_direction (x - 1, y - 1) current_list
       else current_list
 
 let valid_bishop_moves (bishop : piece_info) : (int * int) list =
@@ -177,7 +192,8 @@ let valid_king_moves (king : piece_info) : (int * int) list =
       (king.x - 1, king.y - 1);
     ]
   in
-  if king.moves = 0 then (king.x, king.y + 2) :: (king.x, king.y - 2) :: regular_moves
+  if king.moves = 0 then
+    (king.x, king.y + 2) :: (king.x, king.y - 2) :: regular_moves
   else regular_moves
 
 let valid_moves = function

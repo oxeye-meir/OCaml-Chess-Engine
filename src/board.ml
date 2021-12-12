@@ -12,7 +12,8 @@ let rec replace_piece piece x y board =
   new_board.(x).(y) <- piece;
   new_board
 
-let piece_at board (x, y) = if invalid_pos (x, y) then raise InvalidPos else board.(x).(y)
+let piece_at board (x, y) =
+  if invalid_pos (x, y) then raise InvalidPos else board.(x).(y)
 
 let castle_short board piece x y =
   let rook = piece_at board (x, 7) in
@@ -33,7 +34,10 @@ let castle_long board piece x y =
     init_piece "empty" false x y )
 
 let row_to_string row num =
-  Array.fold_left (fun acc piece -> acc ^ name piece ^ " |") (string_of_int num ^ " |") row
+  Array.fold_left
+    (fun acc piece -> acc ^ name piece ^ " |")
+    (string_of_int num ^ " |")
+    row
 
 let empty_squares x = Array.init 8 (fun y -> init_piece "empty" false x y)
 
@@ -75,7 +79,9 @@ let pieces_with_condition condition board =
   List.filter condition pieces
 
 let black_pieces board =
-  pieces_with_condition (fun piece -> (not (is_empty piece)) && color piece) board
+  pieces_with_condition
+    (fun piece -> (not (is_empty piece)) && color piece)
+    board
 
 let white_pieces board =
   pieces_with_condition (fun piece -> not (is_empty piece || color piece)) board
@@ -104,7 +110,8 @@ let pawn_moves board piece (x, y) =
     || (endx = startx - 1 && endy = starty + 1)
     || (endx = startx - 1 && endy = starty - 1)
   in
-  if diagonal_check (init_x, init_y) (x, y) then enemy_position board (Piece.color piece) (x, y)
+  if diagonal_check (init_x, init_y) (x, y) then
+    enemy_position board (Piece.color piece) (x, y)
   else (x, y) |> piece_at board |> is_empty
 
 let rec check_is_empty board = function
@@ -133,7 +140,8 @@ let castling_filter board color long =
 
 let king_moves board piece (x, y) =
   let regular_filter =
-    empty_position board (x, y) || enemy_position board (Piece.color piece) (x, y)
+    empty_position board (x, y)
+    || enemy_position board (Piece.color piece) (x, y)
   in
   if moves piece = 0 then
     match (x, y) with
@@ -178,7 +186,8 @@ let rec enemy_king_check board curr_color = function
       let piece_at_pos = piece_at board pos in
       if is_king piece_at_pos then
         let piece_at_pos_color = color piece_at_pos in
-        if piece_at_pos_color <> curr_color then true else enemy_king_check board curr_color t
+        if piece_at_pos_color <> curr_color then true
+        else enemy_king_check board curr_color t
       else enemy_king_check board curr_color t
 
 let rec enemy_under_check board = function
@@ -222,7 +231,14 @@ let regular_move (x1, y1) (x2, y2) piece board enemy_pieces =
         |> replace_piece (move_piece (x2, y2) piece) x2 y2,
         captured_piece )
 
-let en_passant_helper (x1, y1) (x2, y2) prev_pawn_pos enemy_pawn_pos piece board enemies =
+let en_passant_helper
+    (x1, y1)
+    (x2, y2)
+    prev_pawn_pos
+    enemy_pawn_pos
+    piece
+    board
+    enemies =
   let prev_pawn_row = fst prev_pawn_pos in
   let prev_pawn_col = snd prev_pawn_pos in
   if (x1, y1) = enemy_pawn_pos then
@@ -234,10 +250,11 @@ let en_passant_helper (x1, y1) (x2, y2) prev_pawn_pos enemy_pawn_pos piece board
         (board
         |> replace_piece (init_piece "empty" false x1 y1) x1 y1
         |> replace_piece pawn_moved x2 y2),
-      piece_at board (prev_pawn_pos) )
+      piece_at board prev_pawn_pos )
   else regular_move (x1, y1) (x2, y2) piece board enemies
 
-let enemy_pieces color board = if color then white_pieces board else black_pieces board
+let enemy_pieces color board =
+  if color then white_pieces board else black_pieces board
 
 let promotion (x, y) board piece = replace_piece piece x y board
 
@@ -248,8 +265,8 @@ let move (x1, y1) (x2, y2) en_passant board =
   let new_board, captured =
     match en_passant with
     | Some (prev_pawn_pos, enemy_pawn_pos) ->
-        en_passant_helper (x1, y1) (x2, y2) prev_pawn_pos enemy_pawn_pos curr_piece board
-          enemy_pieces_list
+        en_passant_helper (x1, y1) (x2, y2) prev_pawn_pos enemy_pawn_pos
+          curr_piece board enemy_pieces_list
     | None -> regular_move (x1, y1) (x2, y2) curr_piece board enemy_pieces_list
   in
   let new_enemy_pieces = enemy_pieces piece_color new_board in
@@ -265,4 +282,5 @@ let rec to_string_helper board num =
   done;
   !board_string
 
-let rec to_string (board : t) = "   A  B  C  D  E  F  G  H " ^ sep ^ to_string_helper board 8
+let rec to_string (board : t) =
+  "   A  B  C  D  E  F  G  H " ^ sep ^ to_string_helper board 8

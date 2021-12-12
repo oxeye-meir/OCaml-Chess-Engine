@@ -8,6 +8,7 @@ type command =
   | Quit
   | Undo
   | Help
+  | Rules
   | Draw
   | Score
 
@@ -45,6 +46,7 @@ let parse str =
   | "draw" -> Draw
   | "undo" -> Undo
   | "help" -> Help
+  | "rules" -> Rules
   | "score" -> Score
   | _ ->
       if String.length formatted_str <= 1 then raise Malformed

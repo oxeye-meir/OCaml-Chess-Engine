@@ -94,11 +94,14 @@ let rec try_move board piece = function
       result = board
 
 let stalemate_helper board turn =
-  let pieces = (if turn then black_pieces board else white_pieces board) |> Array.of_list in
+  let pieces =
+    (if turn then black_pieces board else white_pieces board) |> Array.of_list
+  in
   let non_kings = ref [] in
   let king_pos = ref 0 in
   for i = 0 to Array.length pieces - 1 do
-    if is_king pieces.(i) then king_pos := i else non_kings := pieces.(i) :: !non_kings
+    if is_king pieces.(i) then king_pos := i
+    else non_kings := pieces.(i) :: !non_kings
   done;
   let lst = List.map (next_moves board) !non_kings |> List.flatten in
   let king = pieces.(!king_pos) in
@@ -112,19 +115,23 @@ let stalemate state =
 let en_passant_pawn_check board turn = function
   | [ pos1 ] ->
       let piece_at_pos1 = piece_at board pos1 in
-      if is_pawn piece_at_pos1 && color piece_at_pos1 <> turn then Some pos1 else None
+      if is_pawn piece_at_pos1 && color piece_at_pos1 <> turn then Some pos1
+      else None
   | [ pos1; pos2 ] ->
       let piece_at_pos1 = piece_at board pos1 in
       let piece_at_pos2 = piece_at board pos2 in
       if is_pawn piece_at_pos1 && color piece_at_pos1 <> turn then Some pos1
-      else if is_pawn piece_at_pos2 && color piece_at_pos2 <> turn then Some pos2
+      else if is_pawn piece_at_pos2 && color piece_at_pos2 <> turn then
+        Some pos2
       else None
   | _ -> raise WrongColor
 
 let en_passant (startx, starty) (endx, endy) board turn =
   if starty = endy then
     let possible_pawn_positions =
-      List.filter (fun pos -> valid_pos pos) [ (endx, endy + 1); (endx, endy - 1) ]
+      List.filter
+        (fun pos -> valid_pos pos)
+        [ (endx, endy + 1); (endx, endy - 1) ]
     in
     match turn with
     | true ->
@@ -147,7 +154,8 @@ let undo state =
   | Some t -> t
 
 let promotable piece (x, _) =
-  if is_pawn piece then (color piece && x = 7) || ((not (color piece)) && x = 0) else false
+  if is_pawn piece then (color piece && x = 7) || ((not (color piece)) && x = 0)
+  else false
 
 let checkmate_state state new_state =
   if turn state then
@@ -231,8 +239,14 @@ let reg_state (previous_state, new_board, captured_piece, state) =
         else captured_piece :: state.black_graveyard);
     }
 
+let state_en_passant_helper pos1 pos2 state new_state =
+  let en_passant_enemy = en_passant pos1 pos2 state.board state.turn in
+  match en_passant_enemy with
+  | Some enemy_pos ->
+      { new_state with result = Playing (Some (pos2, enemy_pos)) }
+  | None -> { new_state with result = Playing None }
+
 let change_state pos1 pos2 state =
-  let previous_state = Some state in
   let currently_en_passant =
     match state.result with
     | Playing en_passant_position -> en_passant_position
@@ -242,16 +256,15 @@ let change_state pos1 pos2 state =
   let curr_piece = piece_at curr_board pos1 in
   if turn state <> color curr_piece then raise WrongColor
   else
-    let new_board, captured_piece = Board.move pos1 pos2 currently_en_passant curr_board in
-    let key_args = (previous_state, new_board, captured_piece, state) in
+    let new_board, captured_piece =
+      Board.move pos1 pos2 currently_en_passant curr_board
+    in
+    let key_args = (Some state, new_board, captured_piece, state) in
     let new_state =
-      if promotable curr_piece pos2 then promotion_state pos2 key_args else reg_state key_args
+      if promotable curr_piece pos2 then promotion_state pos2 key_args
+      else reg_state key_args
     in
     if checkmate new_state then checkmate_state state new_state
     else if stalemate new_state then { new_state with result = Stalemate }
     else if new_state.result = Promotion pos2 then new_state
-    else
-      let en_passant_enemy = en_passant pos1 pos2 state.board state.turn in
-      match en_passant_enemy with
-      | Some enemy_pos -> { new_state with result = Playing (Some (pos2, enemy_pos)) }
-      | None -> { new_state with result = Playing None }
+    else state_en_passant_helper pos1 pos2 state new_state

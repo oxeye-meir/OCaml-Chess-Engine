@@ -5,22 +5,26 @@ open Chess.Command
 
 (* Comparators *)
 
-(** [cmp_set_like_lists lst1 lst2] compares two lists to see whether they are equivalent
-    set-like lists. That means checking two things. First, they must both be {i set-like},
-    meaning that they do not contain any duplicates. Second, they must contain the same
-    elements, though not necessarily in the same order. *)
+(** [cmp_set_like_lists lst1 lst2] compares two lists to see whether they are
+    equivalent set-like lists. That means checking two things. First, they must
+    both be {i set-like}, meaning that they do not contain any duplicates.
+    Second, they must contain the same elements, though not necessarily in the
+    same order. *)
 let cmp_set_like_lists lst1 lst2 =
   let uniq1 = List.sort_uniq compare lst1 in
   let uniq2 = List.sort_uniq compare lst2 in
-  List.length lst1 = List.length uniq1 && List.length lst2 = List.length uniq2 && uniq1 = uniq2
+  List.length lst1 = List.length uniq1
+  && List.length lst2 = List.length uniq2
+  && uniq1 = uniq2
 
 (* Print Helpers *)
 let id x = x
 
-let position_printer (x, y) = "(" ^ string_of_int x ^ ", " ^ string_of_int y ^ ")"
+let position_printer (x, y) =
+  "(" ^ string_of_int x ^ ", " ^ string_of_int y ^ ")"
 
-(** [pp_list pp_elt lst] pretty-prints list [lst], using [pp_elt] to pretty-print each element
-    of [lst]. *)
+(** [pp_list pp_elt lst] pretty-prints list [lst], using [pp_elt] to
+    pretty-print each element of [lst]. *)
 let pp_list pp_elt lst =
   let pp_elts lst =
     let rec loop n acc = function
@@ -69,4 +73,5 @@ let backrank color x =
   ]
 
 let rec pawns color x y lst =
-  if y >= 0 then pawns color x (y - 1) (init_piece "pawn" color x y :: lst) else lst
+  if y >= 0 then pawns color x (y - 1) (init_piece "pawn" color x y :: lst)
+  else lst
