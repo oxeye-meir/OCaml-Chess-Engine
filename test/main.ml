@@ -1,4 +1,3 @@
-(* Main test suite where we can add our testing explanation? *)
 open OUnit2
 
 let main_suite =
