@@ -11,6 +11,7 @@ type command =
   | Rules
   | Draw
   | Score
+  | Bot
 
 type promotion_pieces =
   | Knight
@@ -48,6 +49,7 @@ let parse str =
   | "help" -> Help
   | "rules" -> Rules
   | "score" -> Score
+  | "bot" | "b" -> Bot
   | _ ->
       if String.length formatted_str <= 1 then raise Malformed
       else if List.length words_list > 1 then

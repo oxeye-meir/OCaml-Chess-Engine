@@ -3,6 +3,7 @@ open Piece
 open Board
 open State
 open Command
+open Bot
 open Fileutil
 open Unix
 
@@ -339,6 +340,12 @@ and command_helper state times error = function
       try change_state start_coord end_coord state with
       | Board.InvalidPos -> get_current_board state InvalidPos times false
       | State.WrongColor -> get_current_board state WrongColor times false)
+  | Bot -> (
+    let start_coord, end_coord = bot_move state in
+    try change_state start_coord end_coord state with
+    | Board.InvalidPos -> get_current_board state InvalidPos times false
+    | State.WrongColor -> get_current_board state WrongColor times false)
+
 
 and draw_helper state times error =
   print_draw_offer (if turn state then "Black" else "White");
