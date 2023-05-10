@@ -2,7 +2,7 @@ open Board
 
 type position = int*int
 
-let bot_move (state: State.t) : position * position =
+let bot_move (state: State.t) : Piece.t * position =
   let board = (State.board state) in
   let pieces =
     (if State.turn state then black_pieces board else white_pieces board)
@@ -11,4 +11,4 @@ let bot_move (state: State.t) : position * position =
   let n = Random.int (List.length lst) in
   let selected_piece, selected_dest_pos = List.nth lst n in
 
-  Piece.position selected_piece, selected_dest_pos
+  selected_piece, selected_dest_pos
