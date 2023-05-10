@@ -20,6 +20,7 @@ type command =
   | Rules
   | Draw
   | Score
+  | Bot
 
 (** The type [promotion_pieces] represents all the possible pieces that can be
     promoted to. All the possible promotion pieces are [Knight], [Rook],

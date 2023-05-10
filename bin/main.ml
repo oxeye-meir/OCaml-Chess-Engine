@@ -3,6 +3,7 @@ open Piece
 open Board
 open State
 open Command
+open Bot
 open Fileutil
 open Unix
 
@@ -300,6 +301,9 @@ let input_helper (bl_times, wh_times) state =
   in
   (command, new_times)
 
+let str_of_pos p =
+  Format.sprintf "%c%d" (Char.chr (Char.code 'a' + snd p)) (8 - fst p)
+
 let rec get_current_board state error times score =
   match result state with
   | Promotion pos ->
@@ -339,6 +343,14 @@ and command_helper state times error = function
       try change_state start_coord end_coord state with
       | Board.InvalidPos -> get_current_board state InvalidPos times false
       | State.WrongColor -> get_current_board state WrongColor times false)
+  | Bot -> (
+    let piece_to_move, end_coord = bot_move state in
+    let start_coord = Piece.position piece_to_move in
+    let _ = ignore (Lwt_io.printf "Bot decided moving (%s) %s to %s ! \n" (Piece.name piece_to_move) (str_of_pos start_coord) (str_of_pos end_coord)) in
+    try change_state start_coord end_coord state with
+    | Board.InvalidPos -> get_current_board state InvalidPos times false
+    | State.WrongColor -> get_current_board state WrongColor times false)
+
 
 and draw_helper state times error =
   print_draw_offer (if turn state then "Black" else "White");
