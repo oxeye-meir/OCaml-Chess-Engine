@@ -35,8 +35,8 @@ let castle_long board piece x y =
 
 let row_to_string row num =
   Array.fold_left
-    (fun acc piece -> acc ^ name piece ^ " |")
-    (string_of_int num ^ " |")
+    (fun acc piece -> acc ^ name piece ^ ".")
+    (string_of_int num ^ " .")
     row
 
 let empty_squares x = Array.init 8 (fun y -> init_piece "empty" false x y)
@@ -273,7 +273,7 @@ let move (x1, y1) (x2, y2) en_passant board =
   if enemy_under_check new_board new_enemy_pieces then raise InvalidPos
   else (new_board, captured)
 
-let sep = "\n  -------------------------\n"
+let sep = "\n"
 
 let rec to_string_helper board num =
   let board_string = ref "" in
@@ -283,4 +283,4 @@ let rec to_string_helper board num =
   !board_string
 
 let rec to_string (board : t) =
-  "   A  B  C  D  E  F  G  H " ^ sep ^ to_string_helper board 8
+  "   A B C D E F G H " ^ sep ^ to_string_helper board 8
