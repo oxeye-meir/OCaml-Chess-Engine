@@ -40,7 +40,7 @@ let bot_move (state: State.t) : Piece.t * position =
     let start_coord = Piece.position piece_to_move in
     let next_state = State.change_state start_coord end_coord state in
     let s = score_of_board (State.board next_state) in
-    let cmp = if State.turn state then (<) else (>) in
+    let cmp = if not (State.turn state) then (<) else (>) in
     if cmp acc_score s
     then (acc_score, acc_move)
     else (s,m)
