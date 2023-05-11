@@ -247,10 +247,10 @@ let state_en_passant_helper pos1 pos2 state new_state =
   | None -> { new_state with result = Playing None }
 
 let change_state pos1 pos2 state =
-  let currently_en_passant =
-    match state.result with
+  let currently_en_passant = None
+    (* match state.result with
     | Playing en_passant_position -> en_passant_position
-    | _ -> None
+    | _ -> None *)
   in
   let curr_board = board state in
   let curr_piece = piece_at curr_board pos1 in
