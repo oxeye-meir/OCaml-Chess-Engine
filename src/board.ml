@@ -2,6 +2,11 @@ open Piece
 
 type t = Piece.t array array
 
+let fold f acc board =
+  Array.fold_left (fun acc row ->
+    Array.fold_left f acc row
+    ) acc board
+
 exception InvalidPos
 
 (* Helper functions *)
