@@ -5,6 +5,9 @@ exception InvalidPos
 type t
 (** The abstract type representing a board. *)
 
+
+val fold : ('a -> Piece.t -> 'a) -> 'a -> t -> 'a
+
 val init_board : t
 (** [init_board] is a board configuration representing the initial state with
     all of the pieces placed in their correct initial positions. *)

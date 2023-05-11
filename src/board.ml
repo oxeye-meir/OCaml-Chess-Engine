@@ -15,6 +15,11 @@ let rec replace_piece piece x y board =
 let piece_at board (x, y) =
   if invalid_pos (x, y) then raise InvalidPos else board.(x).(y)
 
+let fold f acc (board:t) =
+  Array.fold_left (fun acc row ->
+    Array.fold_left f acc row
+  ) acc board
+
 let castle_short board piece x y =
   let rook = piece_at board (x, 7) in
   let old_x, old_y = position piece in
