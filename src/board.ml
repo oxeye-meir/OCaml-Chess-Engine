@@ -33,11 +33,20 @@ let castle_long board piece x y =
     |> replace_piece (init_piece "empty" false x 0) x 0,
     init_piece "empty" false x y )
 
+let square_to_string r f n =
+  let bg_start,bg_end =
+    if (r+f) mod 2 == 0
+    then "\027[44m","\027[0m"
+    else "",""
+in
+Format.sprintf "%s%s%s" bg_start n bg_end
+
 let row_to_string row num =
+  let names = Array.mapi (fun i p -> square_to_string num i (name p)) row in
   Array.fold_left
-    (fun acc piece -> acc ^ name piece ^ ".")
+    (fun acc n -> acc ^ n ^ ".")
     (string_of_int num ^ " .")
-    row
+    names
 
 let empty_squares x = Array.init 8 (fun y -> init_piece "empty" false x y)
 
