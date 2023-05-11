@@ -26,7 +26,7 @@ let rec string_of_move_tree n =
     let s = String.concat "," (List.map (fun (m,s,t) ->
       let piece_to_move, end_coord = m in
       let start_coord = Piece.position piece_to_move in
-      Format.sprintf "{move: \"%s %s\",score:%f, sub_tree:%s}" (str_of_pos start_coord) (str_of_pos end_coord) s (string_of_move_tree t)) sub_trees
+      Format.sprintf "{move: \"%s %s\",score:%d, sub_tree:%s}" (str_of_pos start_coord) (str_of_pos end_coord) (Float.to_int s) (string_of_move_tree t)) sub_trees
       ) in
     "[" ^ s ^ "]"
 
@@ -58,26 +58,33 @@ let rec generate_tree (state: State.t) (depth:int) : move_tree =
     let sub_trees = List.map (fun m ->
       match make_move state m with
       | Some next_state ->
-        m, (score_of_board (State.board next_state)), (generate_tree state) (depth-1)
+        m, (score_of_board (State.board next_state)), (generate_tree next_state) (depth-1)
       | None -> failwith "incorrect bot move"
       ) moves in
     Node sub_trees
 
-let minimax (t : move_tree) (color:bool) : (move * score) =
+let rec minimax (t : move_tree) (color:bool) : (move * score) =
   match t with
   | Node [] ->  failwith "invalid move tree"
-  | Node ((m, s, t)::sub_trees) ->
+  | Node (((m, s, t)::_) as sub_trees) ->
     let cmp = if color then (<) else (>) in
-    List.fold_left (fun (acc_m, acc_s) (m, s, t) ->
-      if cmp s acc_s
-      then m, s
+    List.fold_left (fun (acc_m, acc_s) (m, s, sub_t) ->
+      let sub_s = match sub_t with
+        | Node [] -> s
+        | _ -> snd (minimax sub_t (not color))
+      in
+      if cmp sub_s acc_s
+      then m, sub_s
       else (acc_m, acc_s)
       ) (m, s) sub_trees
 
 let bot_move (state: State.t) : Piece.t * position =
 
-  let tree = generate_tree state 2 in
-  print_endline (string_of_move_tree tree);
+  let tree = generate_tree state 3 in
+  let oc = open_out "move_tree.json" in
+  Printf.fprintf oc "%s" (string_of_move_tree tree);
+  close_out oc;
+  (* print_endline (string_of_move_tree tree); *)
 
   fst (minimax tree (State.turn state))
 
